@@ -36,9 +36,11 @@ right_grass_image = pygame.transform.flip(left_grass_image, True, False)
 tile_index = {1:grass_image,
               2:dirt_image,
               0:bg_image,
-              4:left_grass_image,
-              5:right_grass_image
+              3:left_grass_image,
+              4:right_grass_image
               }
+
+game_map = {}
 
 TILE_SIZE = grass_image.get_width()
 CHUNK_SIZE = 8
@@ -122,8 +124,6 @@ while True: # game loop
     scroll[0] = int(scroll[0])
     scroll[1] = int(scroll[1])
 
-    game_map = {}
-
     tile_rects = []
     for y in range(3):
         for x in range(4):
@@ -134,7 +134,7 @@ while True: # game loop
                 game_map[target_chunk] = generate_chunk(target_x,target_y)
             for tile in game_map[target_chunk]:
                 display.blit(tile_index[tile[1]],(tile[0][0]*16-scroll[0],tile[0][1]*16-scroll[1]))
-                if tile[1] in [1,2] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
+                if tile[1] in [1,2, 3, 4] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
                     tile_rects.append(pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16))    
     y = 0
     for row in game_map:
@@ -144,13 +144,13 @@ while True: # game loop
                 display.blit(tile_index[2], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '1':
                 display.blit(tile_index[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '0' or tile == '3':
+            if tile == '0':
                 display.blit(tile_index[0], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+            if tile == '3':
+                display.blit(tile_index[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '4':
                 display.blit(tile_index[4], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '5':
-                display.blit(tile_index[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if not (tile == '0' or tile == '3'):
+            if not tile == '0':
                 tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
             x += 1
         y += 1
