@@ -102,16 +102,21 @@ def move(rect, movement, tiles):
             collision_types['top'] = True
     return rect, collision_types
 
+def generate_text(x, y, size):
+    pass
+
 moving_right = False
 moving_left = False
 
 player_y_momentum = 0
 air_timer = 0
 
-scroll = [0, 0]
-true_scroll = [0, 0]
+spawn_x = 3000
 
-player_rect = pygame.Rect(50, 50, player_image.get_width(), player_image.get_height())
+scroll = [0, 0]
+true_scroll = [spawn_x, 0]
+
+player_rect = pygame.Rect(spawn_x, 0, player_image.get_width(), player_image.get_height())
 
 level = 1
 
@@ -161,7 +166,10 @@ while True: # game loop
         player_movement[0] += 2
     if moving_left:
         current_image = player_image
-        player_movement[0] -= 2
+        if player_rect.x > spawn_x - 100:
+            player_movement[0] -= 2
+        else:
+            pass
     player_movement[1] += player_y_momentum
     player_y_momentum += 0.2 
     if player_y_momentum > 3:
