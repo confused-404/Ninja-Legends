@@ -134,7 +134,7 @@ while True: # game loop
                 game_map[target_chunk] = generate_chunk(target_x,target_y)
             for tile in game_map[target_chunk]:
                 display.blit(tile_index[tile[1]],(tile[0][0]*16-scroll[0],tile[0][1]*16-scroll[1]))
-                if tile[1] in [1,2]:
+                if tile[1] in [1,2] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
                     tile_rects.append(pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16))    
     y = 0
     for row in game_map:
