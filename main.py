@@ -1,4 +1,4 @@
-import pygame, sys, spritesheet, time, random # import pygame and sys
+import pygame, sys, spritesheet, time, random, font_loader # import pygame and sys
 
 clock = pygame.time.Clock() # set up the clock
 
@@ -101,9 +101,8 @@ def move(rect, movement, tiles):
             rect.top = tile.bottom
             collision_types['top'] = True
     return rect, collision_types
-
-def generate_text(x, y, size):
-    pass
+  
+pixel_font = font_loader.Font('Data/Images/pixelfont.png')
 
 moving_right = False
 moving_left = False
@@ -174,6 +173,8 @@ while True: # game loop
     player_y_momentum += 0.2 
     if player_y_momentum > 3:
         player_y_momentum = 3
+    if player_rect.x <= spawn_x - 100:
+        pixel_font.render(display, 'You have reached the boundary', (50, 150))
 
     player_rect, collisions = move(player_rect, player_movement, tile_rects)
 

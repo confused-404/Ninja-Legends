@@ -14,3 +14,4 @@ class Spritesheet:
         sprite.set_colorkey((255,255,255))
         sprite.blit(self.sprite_sheet,(0, 0),(x, y, w, h))
         return sprite
+        
