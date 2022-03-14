@@ -80,6 +80,12 @@ def collision_test(rect, tiles):
             hit_list.append(tile)
     return hit_list
 
+def show_fps():
+	# shows the frame rate on the screen
+	fr = str(int(clock.get_fps())) + ' FPS'
+	frt = pixel_font.render(display, fr, (10, 10))
+	return frt
+
 def move(rect, movement, tiles):
     collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
     rect.x += movement[0]
@@ -204,6 +210,8 @@ while True: # game loop
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = False
             
+    frt = show_fps()
+    display.blit(frt, (0, 0))
 
     surf = pygame.transform.scale(display, WINDOW_SIZE)
     screen.blit(surf, (0, 0))

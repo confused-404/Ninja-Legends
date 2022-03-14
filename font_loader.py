@@ -11,7 +11,7 @@ def clip(surf, x, y, x_size, y_size):
 class Font():
     def __init__(self, path):
         self.spacing = 1
-        self.character_order = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','.','-',',',':','+','\'','!','?','0','1','2','3','4','5','6','7','8','9','(',')','/','_','=','\\','[',']','*','"','<','>',';']
+        self.character_order = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','.','-',',',':','+','\'','!','?','0','1','2','3','4','5','6','7','8','9']
         font_img = pygame.image.load(path).convert()
         current_char_width = 0
         self.characters = {}
@@ -20,14 +20,11 @@ class Font():
             c = font_img.get_at((x, 0))
             if c[0] == 127:
                 char_img = clip(font_img, x - current_char_width, 0, current_char_width, font_img.get_height())
-                print(type(char_img))
-                print(char_img.get_colorkey())
                 self.characters[self.character_order[character_count]] = char_img.copy()
                 character_count += 1
                 current_char_width = 0
             else:
                 current_char_width += 1
-        print(self.characters)
         self.space_width = self.characters['A'].get_width()
 
     def render(self, surf, text, loc):
@@ -38,3 +35,5 @@ class Font():
                 x_offset += self.characters[char].get_width() + self.spacing
             else:
                 x_offset += self.space_width + self.spacing
+
+        return surf
