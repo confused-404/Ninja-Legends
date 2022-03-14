@@ -1,4 +1,4 @@
-import pygame, sys, spritesheet, time, random, font_loader # import pygame and sys
+import pygame, sys, spritesheet, time, random, font_loader, noise # import pygame and sys
 
 clock = pygame.time.Clock() # set up the clock
 
@@ -25,19 +25,23 @@ flipped_player_image.set_colorkey(BG_COLOR)
 
 current_image = player_image
 
-spritesheet = spritesheet.Spritesheet('data/images/tileset.png')
-grass_image = pygame.transform.scale(spritesheet.get_sprite(0, 0, 16, 16), (16,16))
-dirt_image = pygame.transform.scale(spritesheet.get_sprite(16, 0, 16, 16), (16,16))
-bg_image = spritesheet.get_sprite(32, 0, 16, 16)
-left_grass_image = spritesheet.get_sprite(48, 0, 16, 16).convert()
+tileset = spritesheet.Spritesheet('data/images/tileset.png')
+grass_image = pygame.transform.scale(tileset.get_sprite(0, 0, 16, 16), (16,16))
+dirt_image = pygame.transform.scale(tileset.get_sprite(16, 0, 16, 16), (16,16))
+bg_image = tileset.get_sprite(32, 0, 16, 16)
+left_grass_image = tileset.get_sprite(48, 0, 16, 16).convert()
 left_grass_image.set_colorkey((255, 255, 255))
 right_grass_image = pygame.transform.flip(left_grass_image, True, False)
+plant = spritesheet.Spritesheet('data/images/plant.png')
+plant_image = plant.get_sprite(0,0,16,16).convert()
+plant_image.set_colorkey((BG_COLOR))
 
 tile_index = {1:grass_image,
               2:dirt_image,
               0:bg_image,
               3:left_grass_image,
-              4:right_grass_image
+              4:right_grass_image,
+              5:plant_image
               }
 
 game_map = {}
@@ -52,12 +56,14 @@ def generate_chunk(x,y):
             target_x = x * CHUNK_SIZE + x_pos
             target_y = y * CHUNK_SIZE + y_pos
             tile_type = 0 # nothing
-            if target_y > 10:
+            height = int(noise.pnoise1(target_x * 0.1, repeat=9999999) * 5)
+            if target_y > 10 - height:
                 tile_type = 2 # dirt
-            elif target_y == 10:
+            elif target_y == 10 - height:
                 tile_type = 1 # grass
-            elif target_y < 10:
-                tile_type = 0
+            elif target_y == 10 - height - 1:
+                if random.randint(1,5) == 1:
+                    tile_type == 5 # plant
             if tile_type != 0:
                 chunk_data.append([[target_x,target_y],tile_type])
     return chunk_data
@@ -135,7 +141,7 @@ while True: # game loop
     scroll[1] = int(scroll[1])
 
     tile_rects = []
-    for y in range(3):
+    for y in range(4):
         for x in range(4):
             target_x = x - 1 + int(round(scroll[0]/(CHUNK_SIZE*16)))
             target_y = y - 1 + int(round(scroll[1]/(CHUNK_SIZE*16)))
@@ -160,7 +166,9 @@ while True: # game loop
                 display.blit(tile_index[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '4':
                 display.blit(tile_index[4], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if not tile == '0':
+            if tile == '5':
+                display.blit(tile_index[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+            if not tile == '0' and tile == '4':
                 tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
             x += 1
         y += 1
