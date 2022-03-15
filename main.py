@@ -1,4 +1,4 @@
-import pygame, sys, spritesheet, time, random, font_loader, noise # import pygame and sys
+import pygame, sys, spritesheet, time, random, font_loader, noise, math # import pygame and sys
 
 clock = pygame.time.Clock() # set up the clock
 
@@ -66,7 +66,7 @@ plant_image.set_colorkey((BG_COLOR))
 crosshair = pygame.image.load('Data/Images/Graphics/crosshair.png').convert()
 crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height())
 crosshair.set_colorkey((0, 0, 0))
-
+shuriken_image = pygame.image.load('Data/Images/Weapons/shuriken.png')
 
 tile_index = {1:grass_image,
               2:dirt_image,
@@ -251,6 +251,13 @@ while True: # game loop
     crosshair_rect.y = mouse_pos[1]/3-4
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
 
+    ### print('crosshair coords:'+ str(crosshair_rect.x)+ ', ' + str(crosshair_rect.y))
+    ### print('player coords:'+ str(player_rect.x-scroll[0]) + ', ' + str(player_rect.y-scroll[1]))
+    angle = 360-math.atan2(crosshair_rect.y-player_rect.y-scroll[1],crosshair_rect.x-player_rect.x-scroll[0])*180/math.pi
+    shuriken = pygame.transform.rotate(shuriken_image, angle)
+    rect = shuriken.get_rect(center=(player_rect.x + 5.5 - scroll[0],player_rect.y + 7.5 - scroll[1]))
+    display.blit(shuriken,(rect.x, rect.y))
+
     for event in pygame.event.get(): # event loop
         if event.type == QUIT: # check for window quit
             pygame.quit() # stop pygame
@@ -269,6 +276,7 @@ while True: # game loop
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = False
             
+
     frt = show_fps()
 
     surf = pygame.transform.scale(display, WINDOW_SIZE)
