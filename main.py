@@ -7,7 +7,7 @@ pygame.init() # initiate pygame
 
 pygame.display.set_caption('Ninja Legends') # set the window name
 
-WINDOW_SIZE = (600,400) # set up window size
+WINDOW_SIZE = (900,600) # set up window size
 
 screen = pygame.display.set_mode(WINDOW_SIZE,0,32) # initiate screen
 
@@ -17,24 +17,56 @@ BG_COLOR = (39, 39, 68)
 
 FPS = 60
 
-player_image = pygame.transform.scale(pygame.image.load('Data/Images/thumbnail_player_image.png').convert(), (18,18))
-player_image.set_colorkey(BG_COLOR)
+pygame.mouse.set_visible(False)
 
-flipped_player_image = pygame.transform.flip(player_image, True, False)
-flipped_player_image.set_colorkey(BG_COLOR)
+global animation_frames
+animation_frames = {}
 
-current_image = player_image
+def load_animations(path, frame_durations):
+    global animation_frames
+    animation_name = path.split('/')[-1]
+    animation_frame_data = []
+    n = 0
+    for frame in frame_durations:
+        animation_frame_id = animation_name + '_' + str(n)
+        img_loc = path + '/' + animation_frame_id + '.png'
+        animation_image = pygame.image.load(img_loc).convert()
+        animation_image.set_colorkey(BG_COLOR)
+        animation_frames[animation_frame_id] = animation_image.copy()
+        for i in range(frame):
+            animation_frame_data.append(animation_frame_id)
+        n += 1
+    return animation_frame_data
 
-tileset = spritesheet.Spritesheet('data/images/tileset.png')
+def change_action(action_var, frame,new_value):
+    if action_var != new_value:
+        action_var = new_value
+        frame = 0
+    return action_var, frame
+
+animation_database = {}
+
+animation_database['run'] = load_animations('Data/Images/PlayerAnimations/Run', [10, 10])
+animation_database['idle'] = load_animations('Data/Images/PlayerAnimations/Idle', [28, 7, 28, 7])
+
+player_action = 'idle'
+player_frame = 0
+player_flip = True
+
+tileset = spritesheet.Spritesheet('data/images/Tiles/tileset.png')
 grass_image = pygame.transform.scale(tileset.get_sprite(0, 0, 16, 16), (16,16))
 dirt_image = pygame.transform.scale(tileset.get_sprite(16, 0, 16, 16), (16,16))
 bg_image = tileset.get_sprite(32, 0, 16, 16)
 left_grass_image = tileset.get_sprite(48, 0, 16, 16).convert()
 left_grass_image.set_colorkey((255, 255, 255))
 right_grass_image = pygame.transform.flip(left_grass_image, True, False)
-plant = spritesheet.Spritesheet('data/images/plant.png')
+plant = spritesheet.Spritesheet('data/images/Tiles/plant.png')
 plant_image = plant.get_sprite(0,0,16,16).convert()
 plant_image.set_colorkey((BG_COLOR))
+crosshair = pygame.image.load('Data/Images/Graphics/crosshair.png').convert()
+crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height())
+crosshair.set_colorkey((0, 0, 0))
+
 
 tile_index = {1:grass_image,
               2:dirt_image,
@@ -56,19 +88,18 @@ def generate_chunk(x,y):
             target_x = x * CHUNK_SIZE + x_pos
             target_y = y * CHUNK_SIZE + y_pos
             tile_type = 0 # nothing
-            height = int(noise.pnoise1(target_x * 0.1, repeat=9999999) * 5)
-            if target_y > 10 - height:
+            height = int(noise.pnoise1(target_x * 0.1, repeat=9999999) * 4)
+            if target_y >= 9 - height:
                 tile_type = 2 # dirt
-            elif target_y == 10 - height:
+            elif target_y == 8 - height:
                 tile_type = 1 # grass
-            elif target_y == 10 - height - 1:
-                if random.randint(1,5) == 1:
-                    tile_type == 5 # plant
+            elif target_y == 8 - height - 1:
+                if random.randint(1,3) == 1:
+                    tile_type = 5 # plant
             if tile_type != 0:
                 chunk_data.append([[target_x,target_y],tile_type])
     return chunk_data
                     
-
 def load_map(path):
     f = open(path + '.txt', 'r')
     data = f.read()
@@ -114,7 +145,7 @@ def move(rect, movement, tiles):
             collision_types['top'] = True
     return rect, collision_types
   
-pixel_font = font_loader.Font('Data/Images/pixelfont.png')
+pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
 moving_right = False
 moving_left = False
@@ -127,7 +158,8 @@ spawn_x = 3000
 scroll = [0, 0]
 true_scroll = [spawn_x, 0]
 
-player_rect = pygame.Rect(spawn_x, 0, player_image.get_width(), player_image.get_height())
+measuring_img = pygame.image.load('Data/Images/PlayerAnimations/Idle/idle_0.png')
+player_rect = pygame.Rect(spawn_x, 0, measuring_img.get_width(), measuring_img.get_height())
 
 level = 1
 
@@ -160,8 +192,6 @@ while True: # game loop
                 display.blit(tile_index[2], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '1':
                 display.blit(tile_index[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '0':
-                display.blit(tile_index[0], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '3':
                 display.blit(tile_index[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '4':
@@ -175,20 +205,31 @@ while True: # game loop
 
     player_movement = [0, 0]
     if moving_right:
-        current_image = flipped_player_image
         player_movement[0] += 2
     if moving_left:
-        current_image = player_image
         if player_rect.x > spawn_x - 100:
             player_movement[0] -= 2
-        else:
-            pass
     player_movement[1] += player_y_momentum
     player_y_momentum += 0.2 
     if player_y_momentum > 3:
         player_y_momentum = 3
     if player_rect.x <= spawn_x - 100:
         pixel_font.render(display, 'You have reached the boundary', (50, 150))
+    
+    if player_movement[0] > 0:
+        if player_movement[1] == 0: 
+            player_action,player_frame = change_action(player_action, player_frame, 'run')
+        player_flip = True
+    if player_movement[0] == 0:
+        if player_movement[1] == 0: 
+            player_action,player_frame = change_action(player_action, player_frame, 'idle')
+    if player_movement[0] < 0:
+        if player_movement[1] == 0: 
+            player_action,player_frame = change_action(player_action, player_frame, 'run')
+        player_flip = False
+    else:
+        pass # will be changed when jump animation is created
+        
 
     player_rect, collisions = move(player_rect, player_movement, tile_rects)
 
@@ -198,7 +239,17 @@ while True: # game loop
     else:
         air_timer += 1
 
-    display.blit(current_image, (player_rect.x - scroll[0], player_rect.y - scroll[1]))
+    player_frame += 1
+    if player_frame >= len(animation_database[player_action]):
+        player_frame = 0
+    player_img_id = animation_database[player_action][player_frame]
+    player_img = animation_frames[player_img_id]
+    display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0], player_rect.y - scroll[1]))
+    
+    mouse_pos = pygame.mouse.get_pos()
+    crosshair_rect.x = mouse_pos[0]/3-4
+    crosshair_rect.y = mouse_pos[1]/3-4
+    display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
 
     for event in pygame.event.get(): # event loop
         if event.type == QUIT: # check for window quit
@@ -219,7 +270,6 @@ while True: # game loop
                 moving_left = False
             
     frt = show_fps()
-    display.blit(frt, (0, 0))
 
     surf = pygame.transform.scale(display, WINDOW_SIZE)
     screen.blit(surf, (0, 0))
