@@ -66,7 +66,7 @@ plant_image.set_colorkey((BG_COLOR))
 crosshair = pygame.image.load('Data/Images/Graphics/crosshair.png').convert()
 crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height())
 crosshair.set_colorkey((0, 0, 0))
-shuriken_image = pygame.image.load('Data/Images/Weapons/shuriken.png')
+shuriken_image = pygame.image.load('Data/Images/Weapons/shuriken.png').convert_alpha()
 
 tile_index = {1:grass_image,
               2:dirt_image,
@@ -144,6 +144,21 @@ def move(rect, movement, tiles):
             rect.top = tile.bottom
             collision_types['top'] = True
     return rect, collision_types
+  
+def rotate(img, pos, angle):
+    w, h = img.get_size()
+    img2 = pygame.Surface((w*2, h*2), pygame.SRCALPHA)
+    img2.blit(img, (w-pos[0], h-pos[1]))
+    return pygame.transform.rotate(img2, angle)
+
+def blitRotate(surf, image, pos, originPos, angle):
+    image_rect = image.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
+    offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
+    rotated_offset = offset_center_to_pivot.rotate(-angle)
+    rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
+    rotated_image = pygame.transform.rotate(image, angle)
+    rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
+    surf.blit(rotated_image, rotated_image_rect)
   
 pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
@@ -244,19 +259,20 @@ while True: # game loop
         player_frame = 0
     player_img_id = animation_database[player_action][player_frame]
     player_img = animation_frames[player_img_id]
-    display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0], player_rect.y - scroll[1]))
+    display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0] + .5, player_rect.y - scroll[1]))
     
     mouse_pos = pygame.mouse.get_pos()
     crosshair_rect.x = mouse_pos[0]/3-4
     crosshair_rect.y = mouse_pos[1]/3-4
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
 
-    ### print('crosshair coords:'+ str(crosshair_rect.x)+ ', ' + str(crosshair_rect.y))
-    ### print('player coords:'+ str(player_rect.x-scroll[0]) + ', ' + str(player_rect.y-scroll[1]))
-    angle = 360-math.atan2(crosshair_rect.y-player_rect.y-scroll[1],crosshair_rect.x-player_rect.x-scroll[0])*180/math.pi
-    shuriken = pygame.transform.rotate(shuriken_image, angle)
-    rect = shuriken.get_rect(center=(player_rect.x + 5.5 - scroll[0],player_rect.y + 7.5 - scroll[1]))
-    display.blit(shuriken,(rect.x, rect.y))
+    player_center = [player_rect.centerx - scroll[0], player_rect.centery - scroll[1]]
+    crosshair_center = [crosshair_rect.x, crosshair_rect.y]
+    
+    rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
+    angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+    
+    blitRotate(display, shuriken_image, (player_center[0], player_center[1]), (0, 0), angle)
 
     for event in pygame.event.get(): # event loop
         if event.type == QUIT: # check for window quit
