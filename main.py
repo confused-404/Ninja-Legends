@@ -194,7 +194,7 @@ class Bullet:
             self.dir = (self.dir[0]/length, self.dir[1]/length)
         
         self.bullet = bullet_image.copy()
-        self.bullet = pygame.transform.scale(self.bullet, (self.bullet.get_width()/1.5, self.bullet.get_width()/1.5))
+        self.bullet = pygame.transform.scale(self.bullet, (self.bullet.get_width(), self.bullet.get_width()))
         self.speed = 2
     
     def update(self):
