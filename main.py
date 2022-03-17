@@ -144,21 +144,16 @@ def move(rect, movement, tiles):
             rect.top = tile.bottom
             collision_types['top'] = True
     return rect, collision_types
-  
-def rotate(img, pos, angle):
-    w, h = img.get_size()
-    img2 = pygame.Surface((w*2, h*2), pygame.SRCALPHA)
-    img2.blit(img, (w-pos[0], h-pos[1]))
-    return pygame.transform.rotate(img2, angle)
 
-def blitRotate(surf, image, pos, originPos, angle):
-    image_rect = image.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
+def blitRotate(surf, cleanimage, pos, originPos, angle):
+    image_rect = cleanimage.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
     offset_center_to_pivot = pygame.math.Vector2(pos) - image_rect.center
     rotated_offset = offset_center_to_pivot.rotate(-angle)
     rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
-    rotated_image = pygame.transform.rotate(image, angle)
-    rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
-    surf.blit(rotated_image, rotated_image_rect)
+    outlineSurf = pygame.transform.rotate(cleanimage, angle)
+    rotated_image_rect = cleanimage.get_rect(center = rotated_image_center)
+    surf.blit(cleanimage, rotated_image_rect)
+    return outlineSurf
     
 def perfect_outline(img, loc, display):
     final_surf = pygame.Surface((img.get_size()))
@@ -200,6 +195,11 @@ measuring_img = pygame.image.load('Data/Images/PlayerAnimations/Idle/idle_0.png'
 player_rect = pygame.Rect(spawn_x, 0, measuring_img.get_width(), measuring_img.get_height())
 
 level = 1
+
+outlineSurf = pygame.Surface((13, 13))
+perfect_outline_2(shuriken_image, (1,1), outlineSurf)
+outlineSurf.blit(shuriken_image, (1, 1))
+clean_outline = outlineSurf.copy()
 
 while True: # game loop
     display.fill(BG_COLOR)
@@ -283,17 +283,13 @@ while True: # game loop
     player_img_id = animation_database[player_action][player_frame]
     player_img = animation_frames[player_img_id]
     
-    player_center = [player_rect.centerx - scroll[0], player_rect.centery - scroll[1]+4]
+    player_center = [player_rect.centerx - scroll[0], player_rect.centery - scroll[1]]
     crosshair_center = [crosshair_rect.x, crosshair_rect.y]
     
     rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
     
-    outlineSurf = pygame.Surface((13, 13))
-    perfect_outline_2(shuriken_image, (1,1), outlineSurf)
-    outlineSurf.blit(shuriken_image, (1, 1))
-    
-    blitRotate(display, outlineSurf, (player_center[0], player_center[1]), (0, 0), angle)
+    outlineSurf = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
     
     display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0] + .5, player_rect.y - scroll[1]))
     
