@@ -159,6 +159,29 @@ def blitRotate(surf, image, pos, originPos, angle):
     rotated_image = pygame.transform.rotate(image, angle)
     rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
     surf.blit(rotated_image, rotated_image_rect)
+    
+def perfect_outline(img, loc, display):
+    final_surf = pygame.Surface((img.get_size()))
+    mask = pygame.mask.from_surface(img)
+    mask_surf = mask.to_surface()
+    mask_surf.set_colorkey((0,0,0))
+    final_surf.blit(mask_surf,(loc[0]-1,loc[1]))
+    final_surf.blit(mask_surf,(loc[0]+1,loc[1]))
+    final_surf.blit(mask_surf,(loc[0],loc[1]-1))
+    final_surf.blit(mask_surf,(loc[0],loc[1]+1))
+    
+def perfect_outline_2(img, loc, display):
+    mask = pygame.mask.from_surface(img)
+    mask_outline = mask.outline()
+    mask_surf = pygame.Surface(img.get_size())
+    for pixel in mask_outline:
+        mask_surf.set_at(pixel,(255,255,255))
+    mask_surf.set_colorkey((0,0,0))
+    display.blit(mask_surf,(loc[0]-1,loc[1]))
+    display.blit(mask_surf,(loc[0]+1,loc[1]))
+    display.blit(mask_surf,(loc[0],loc[1]-1))
+    display.blit(mask_surf,(loc[0],loc[1]+1))
+    display.set_colorkey((0,0,0))
   
 pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
@@ -259,20 +282,25 @@ while True: # game loop
         player_frame = 0
     player_img_id = animation_database[player_action][player_frame]
     player_img = animation_frames[player_img_id]
+    
+    player_center = [player_rect.centerx - scroll[0], player_rect.centery - scroll[1]+4]
+    crosshair_center = [crosshair_rect.x, crosshair_rect.y]
+    
+    rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
+    angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
+    
+    outlineSurf = pygame.Surface((13, 13))
+    perfect_outline_2(shuriken_image, (1,1), outlineSurf)
+    outlineSurf.blit(shuriken_image, (1, 1))
+    
+    blitRotate(display, outlineSurf, (player_center[0], player_center[1]), (0, 0), angle)
+    
     display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0] + .5, player_rect.y - scroll[1]))
     
     mouse_pos = pygame.mouse.get_pos()
     crosshair_rect.x = mouse_pos[0]/3-4
     crosshair_rect.y = mouse_pos[1]/3-4
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
-
-    player_center = [player_rect.centerx - scroll[0], player_rect.centery - scroll[1]]
-    crosshair_center = [crosshair_rect.x, crosshair_rect.y]
-    
-    rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
-    angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
-    
-    blitRotate(display, shuriken_image, (player_center[0], player_center[1]), (0, 0), angle)
 
     for event in pygame.event.get(): # event loop
         if event.type == QUIT: # check for window quit
