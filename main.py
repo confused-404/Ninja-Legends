@@ -180,6 +180,31 @@ def perfect_outline_2(img, loc, display):
   
 pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
+bullet_velocity = 2
+bullets = []
+
+class Bullet:
+    def __init__(self, x, y, rel_x, rel_y, angle, bullet_image):
+        self.pos = (x, y)
+        self.dir = (rel_x, rel_y)
+        length = math.hypot(*self.dir)
+        if length == 0.0:
+            self.dir = (0, -1)
+        else:
+            self.dir = (self.dir[0]/length, self.dir[1]/length)
+        
+        self.bullet = bullet_image.copy()
+        self.bullet = pygame.transform.scale(self.bullet, (self.bullet.get_width()/1.5, self.bullet.get_width()/1.5))
+        self.speed = 2
+    
+    def update(self):
+        self.pos = (self.pos[0] + self.dir[0]*self.speed,
+                    self.pos[1] + self.dir[1]*self.speed)
+        
+    def draw(self, surf):
+        bullet_rect = self.bullet.get_rect(center = self.pos)
+        surf.blit(self.bullet, bullet_rect)
+
 moving_right = False
 moving_left = False
 
@@ -302,6 +327,8 @@ while True: # game loop
         if event.type == QUIT: # check for window quit
             pygame.quit() # stop pygame
             sys.exit() # stop script
+        if event.type == MOUSEBUTTONDOWN:
+            bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, outlineSurf))
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
@@ -315,7 +342,14 @@ while True: # game loop
                 moving_right = False
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = False
+        
+    for bullet in bullets[:]:
+        bullet.update()
+        if not display.get_rect().collidepoint(bullet.pos):
+            bullets.remove(bullet)
             
+    for bullet in bullets:
+        bullet.draw(display)
 
     frt = show_fps()
 
