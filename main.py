@@ -153,7 +153,7 @@ def blitRotate(surf, cleanimage, pos, originPos, angle):
     outlineSurf = pygame.transform.rotate(cleanimage, angle)
     rotated_image_rect = cleanimage.get_rect(center = rotated_image_center)
     surf.blit(cleanimage, rotated_image_rect)
-    return outlineSurf
+    return outlineSurf, rotated_image_rect
     
 def perfect_outline(img, loc, display):
     final_surf = pygame.Surface((img.get_size()))
@@ -184,8 +184,7 @@ bullet_velocity = 2
 bullets = []
 
 class Bullet:
-    def __init__(self, x, y, rel_x, rel_y, angle, bullet_image):
-        self.pos = (x, y)
+    def __init__(self, x, y, rel_x, rel_y, angle, bullet_image, shuriken_center):
         self.dir = (rel_x, rel_y)
         length = math.hypot(*self.dir)
         if length == 0.0:
@@ -194,8 +193,14 @@ class Bullet:
             self.dir = (self.dir[0]/length, self.dir[1]/length)
         
         self.bullet = bullet_image.copy()
-        self.bullet = pygame.transform.scale(self.bullet, (self.bullet.get_width(), self.bullet.get_width()))
+        self.offset_x, self.offset_y = shuriken_center[0] - x, shuriken_center[1] - y
+        self.offset_angle = (180 / math.pi) * -math.atan2(self.offset_y, self.offset_x)
+        self.offset_length = math.hypot(*(self.offset_x, self.offset_y))
+        self.offset = [self.offset_angle,
+                       self.offset_length]
         self.speed = 2
+        bullet_image = pygame.transform.rotate(self.bullet, angle)
+        self.pos = (x + self.offset_x, y + self.offset_y)
     
     def update(self):
         self.pos = (self.pos[0] + self.dir[0]*self.speed,
@@ -314,13 +319,13 @@ while True: # game loop
     rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
     
-    outlineSurf = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
+    outlineSurf, bullet_rect = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
     
-    display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0] + .5, player_rect.y - scroll[1]))
+    display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0], player_rect.y - scroll[1]))
     
     mouse_pos = pygame.mouse.get_pos()
-    crosshair_rect.x = mouse_pos[0]/3-4
-    crosshair_rect.y = mouse_pos[1]/3-4
+    crosshair_rect.x = mouse_pos[0]/3-crosshair.get_width()/2
+    crosshair_rect.y = mouse_pos[1]/3-crosshair.get_width()/2
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
 
     for event in pygame.event.get(): # event loop
@@ -328,7 +333,7 @@ while True: # game loop
             pygame.quit() # stop pygame
             sys.exit() # stop script
         if event.type == MOUSEBUTTONDOWN:
-            bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, outlineSurf))
+            bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
