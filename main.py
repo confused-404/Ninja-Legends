@@ -68,6 +68,22 @@ crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height()
 crosshair.set_colorkey((0, 0, 0))
 shuriken_image = pygame.image.load('Data/Images/Weapons/shuriken.png').convert_alpha()
 
+pygame.mixer.pre_init(44100, -16, 2, 5)
+
+jump_sound = pygame.mixer.Sound('Data/Music/jump.wav')
+jump_sound.set_volume(.075)
+
+grass_0 = pygame.mixer.Sound('Data/Music/grass_0.wav')
+grass_1 = pygame.mixer.Sound('Data/Music/grass_1.wav')
+grass_0.set_volume(.15)
+grass_1.set_volume(.15)
+grass_sounds = [grass_0, grass_1]
+grass_sound_timer = 0
+
+pygame.mixer.music.load('Data/Music/music.wav')
+pygame.mixer.music.play(-1)
+muted = False
+
 tile_index = {1:grass_image,
               2:dirt_image,
               0:bg_image,
@@ -182,7 +198,6 @@ pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
 bullet_velocity = 2
 bullets = []
-shooting = False
 
 class Bullet:
     def __init__(self, x, y, rel_x, rel_y, angle, bullet_image, shuriken_center):
@@ -199,7 +214,7 @@ class Bullet:
         self.offset_length = math.hypot(*(self.offset_x, self.offset_y))
         self.offset = [self.offset_angle,
                        self.offset_length]
-        self.speed = 3
+        self.speed = 2
         bullet_image = pygame.transform.rotate(self.bullet, angle)
         self.pos = (x + self.offset_x, y + self.offset_y)
     
@@ -210,6 +225,12 @@ class Bullet:
     def draw(self, surf):
         bullet_rect = self.bullet.get_rect(center = self.pos)
         surf.blit(self.bullet, bullet_rect)
+
+mobs = []
+class Mob(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        pygame.sprite.Sprite.__init__(self, mobs)
+        self.image = pygame.image.load()
 
 moving_right = False
 moving_left = False
@@ -233,6 +254,9 @@ outlineSurf.blit(shuriken_image, (1, 1))
 clean_outline = outlineSurf.copy()
 
 while True: # game loop
+    if grass_sound_timer > 0:
+        grass_sound_timer -= 1
+    
     display.fill(BG_COLOR)
 
     true_scroll[0] += (player_rect.x-scroll[0]-142)/20
@@ -305,6 +329,10 @@ while True: # game loop
     if collisions['bottom']:
         player_y_momentum = 0
         air_timer = 0
+        if player_movement[0] != 0:
+            if grass_sound_timer == 0:
+                grass_sound_timer = 30
+                random.choice(grass_sounds).play()
     else:
         air_timer += 1
 
@@ -320,8 +348,7 @@ while True: # game loop
     rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
     
-    if not shooting:
-        outlineSurf, bullet_rect = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
+    outlineSurf, bullet_rect = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
     
     display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0], player_rect.y - scroll[1]))
     
@@ -330,14 +357,12 @@ while True: # game loop
     crosshair_rect.y = mouse_pos[1]/3-crosshair.get_width()/2
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
 
-    for event in pygame.event.get(): # event loop
+    for event in pygame.event.get():
         if event.type == QUIT: # check for window quit
             pygame.quit() # stop pygame
             sys.exit() # stop script
         if event.type == MOUSEBUTTONDOWN:
-            if not shooting:
-                bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
-                shooting = True
+            bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
@@ -345,7 +370,14 @@ while True: # game loop
                 moving_left = True
             if event.key == K_UP or event.key == K_w or event.key == K_SPACE:
                 if air_timer < 6:
+                    jump_sound.play()
                     player_y_momentum = -4
+            if event.key == K_m:
+                if muted == False:
+                    pygame.mixer.music.fadeout(1000)
+                    muted = True
+                else:
+                    pygame.mixer.music.play(-1)
         if event.type == KEYUP:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = False
@@ -356,7 +388,6 @@ while True: # game loop
         bullet.update()
         if not display.get_rect().collidepoint(bullet.pos):
             bullets.remove(bullet)
-            shooting = False
             
     for bullet in bullets:
         bullet.draw(display)
