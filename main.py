@@ -198,6 +198,7 @@ pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
 bullet_velocity = 2
 bullets = []
+shooting = False
 
 class Bullet:
     def __init__(self, x, y, rel_x, rel_y, angle, bullet_image, shuriken_center):
@@ -214,7 +215,7 @@ class Bullet:
         self.offset_length = math.hypot(*(self.offset_x, self.offset_y))
         self.offset = [self.offset_angle,
                        self.offset_length]
-        self.speed = 2
+        self.speed = 3
         bullet_image = pygame.transform.rotate(self.bullet, angle)
         self.pos = (x + self.offset_x, y + self.offset_y)
     
@@ -348,7 +349,8 @@ while True: # game loop
     rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
     
-    outlineSurf, bullet_rect = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
+    if shooting == False:
+        outlineSurf, bullet_rect = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
     
     display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0], player_rect.y - scroll[1]))
     
@@ -362,7 +364,9 @@ while True: # game loop
             pygame.quit() # stop pygame
             sys.exit() # stop script
         if event.type == MOUSEBUTTONDOWN:
-            bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
+            if shooting == False:
+                bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
+                shooting = True
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
@@ -388,6 +392,7 @@ while True: # game loop
         bullet.update()
         if not display.get_rect().collidepoint(bullet.pos):
             bullets.remove(bullet)
+            shooting = False
             
     for bullet in bullets:
         bullet.draw(display)
