@@ -1,5 +1,7 @@
 import pygame, sys, spritesheet, time, random, font_loader, noise, math # import pygame and sys
 
+import Data.engine as e
+
 clock = pygame.time.Clock() # set up the clock
 
 from pygame.locals import * # import pygame modules
@@ -14,44 +16,13 @@ screen = pygame.display.set_mode(WINDOW_SIZE,0,32) # initiate screen
 display = pygame.Surface((300, 200))
 
 BG_COLOR = (39, 39, 68)
+e.set_global_colorkey(BG_COLOR)
 
 FPS = 60
 
 pygame.mouse.set_visible(False)
 
-global animation_frames
-animation_frames = {}
-
-def load_animations(path, frame_durations):
-    global animation_frames
-    animation_name = path.split('/')[-1]
-    animation_frame_data = []
-    n = 0
-    for frame in frame_durations:
-        animation_frame_id = animation_name + '_' + str(n)
-        img_loc = path + '/' + animation_frame_id + '.png'
-        animation_image = pygame.image.load(img_loc).convert()
-        animation_image.set_colorkey(BG_COLOR)
-        animation_frames[animation_frame_id] = animation_image.copy()
-        for i in range(frame):
-            animation_frame_data.append(animation_frame_id)
-        n += 1
-    return animation_frame_data
-
-def change_action(action_var, frame,new_value):
-    if action_var != new_value:
-        action_var = new_value
-        frame = 0
-    return action_var, frame
-
-animation_database = {}
-
-animation_database['run'] = load_animations('Data/Images/PlayerAnimations/Run', [10, 10])
-animation_database['idle'] = load_animations('Data/Images/PlayerAnimations/Idle', [28, 7, 28, 7])
-
-player_action = 'idle'
-player_frame = 0
-player_flip = True
+e.load_animations('Data/Images/Animations/')
 
 tileset = spritesheet.Spritesheet('data/images/Tiles/tileset.png')
 grass_image = pygame.transform.scale(tileset.get_sprite(0, 0, 16, 16), (16,16))
@@ -70,17 +41,17 @@ shuriken_image = pygame.image.load('Data/Images/Weapons/shuriken.png').convert_a
 
 pygame.mixer.pre_init(44100, -16, 2, 5)
 
-jump_sound = pygame.mixer.Sound('Data/Music/jump.wav')
+jump_sound = pygame.mixer.Sound('Data/Audio/jump.wav')
 jump_sound.set_volume(.075)
 
-grass_0 = pygame.mixer.Sound('Data/Music/grass_0.wav')
-grass_1 = pygame.mixer.Sound('Data/Music/grass_1.wav')
+grass_0 = pygame.mixer.Sound('Data/Audio/grass_0.wav')
+grass_1 = pygame.mixer.Sound('Data/Audio/grass_1.wav')
 grass_0.set_volume(.15)
 grass_1.set_volume(.15)
 grass_sounds = [grass_0, grass_1]
 grass_sound_timer = 0
 
-pygame.mixer.music.load('Data/Music/music.wav')
+pygame.mixer.music.load('Data/Audio/music.wav')
 pygame.mixer.music.play(-1)
 muted = False
 
@@ -114,52 +85,7 @@ def generate_chunk(x,y):
                     tile_type = 5 # plant
             if tile_type != 0:
                 chunk_data.append([[target_x,target_y],tile_type])
-    return chunk_data
-                    
-def load_map(path):
-    f = open(path + '.txt', 'r')
-    data = f.read()
-    f.close()
-    data = data.split("\n")
-    game_map = []
-    for row in data:
-        game_map.append(list(row))
-    return game_map
-
-def collision_test(rect, tiles):
-    hit_list = []
-    for tile in tiles:
-        if rect.colliderect(tile):
-            hit_list.append(tile)
-    return hit_list
-
-def show_fps():
-	# shows the frame rate on the screen
-	fr = str(int(clock.get_fps())) + ' FPS'
-	frt = pixel_font.render(display, fr, (10, 10))
-	return frt
-
-def move(rect, movement, tiles):
-    collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
-    rect.x += movement[0]
-    hit_list = collision_test(rect, tiles)
-    for tile in hit_list:
-        if movement[0] > 0:
-            rect.right = tile.left
-            collision_types['right'] = True
-        elif movement[0] < 0:
-            rect.left = tile.right
-            collision_types['left'] = True
-    rect.y += movement[1]
-    hit_list = collision_test(rect, tiles)
-    for tile in hit_list:
-        if movement[1] > 0:
-            rect.bottom = tile.top
-            collision_types['bottom'] = True
-        elif movement[1] < 0:
-            rect.top = tile.bottom
-            collision_types['top'] = True
-    return rect, collision_types
+    return chunk_data                   
 
 def blitRotate(surf, cleanimage, pos, originPos, angle):
     image_rect = cleanimage.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
@@ -170,16 +96,6 @@ def blitRotate(surf, cleanimage, pos, originPos, angle):
     rotated_image_rect = cleanimage.get_rect(center = rotated_image_center)
     surf.blit(cleanimage, rotated_image_rect)
     return outlineSurf, rotated_image_rect
-    
-def perfect_outline(img, loc, display):
-    final_surf = pygame.Surface((img.get_size()))
-    mask = pygame.mask.from_surface(img)
-    mask_surf = mask.to_surface()
-    mask_surf.set_colorkey((0,0,0))
-    final_surf.blit(mask_surf,(loc[0]-1,loc[1]))
-    final_surf.blit(mask_surf,(loc[0]+1,loc[1]))
-    final_surf.blit(mask_surf,(loc[0],loc[1]-1))
-    final_surf.blit(mask_surf,(loc[0],loc[1]+1))
     
 def perfect_outline_2(img, loc, display):
     mask = pygame.mask.from_surface(img)
@@ -193,10 +109,15 @@ def perfect_outline_2(img, loc, display):
     display.blit(mask_surf,(loc[0],loc[1]-1))
     display.blit(mask_surf,(loc[0],loc[1]+1))
     display.set_colorkey((0,0,0))
+    
+def show_fps():
+	# shows the frame rate on the screen
+	fr = str(int(clock.get_fps())) + ' FPS'
+	frt = pixel_font.render(display, fr, (10, 10))
+	return frt
   
 pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 
-bullet_velocity = 2
 bullets = []
 shooting = False
 
@@ -227,11 +148,8 @@ class Bullet:
         bullet_rect = self.bullet.get_rect(center = self.pos)
         surf.blit(self.bullet, bullet_rect)
 
-mobs = []
-class Mob(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        pygame.sprite.Sprite.__init__(self, mobs)
-        self.image = pygame.image.load()
+def dtf(dt):
+    return dt / 1000 * 60
 
 moving_right = False
 moving_left = False
@@ -244,10 +162,10 @@ spawn_x = 3000
 scroll = [0, 0]
 true_scroll = [spawn_x, 0]
 
-measuring_img = pygame.image.load('Data/Images/PlayerAnimations/Idle/idle_0.png')
-player_rect = pygame.Rect(spawn_x, 0, measuring_img.get_width(), measuring_img.get_height())
+dt = 0 # delta time
+last_frame = pygame.time.get_ticks()
 
-level = 1
+player = e.entity(3000, 0, 11, 15, 'player', True)
 
 outlineSurf = pygame.Surface((13, 13))
 perfect_outline_2(shuriken_image, (1,1), outlineSurf)
@@ -255,16 +173,18 @@ outlineSurf.blit(shuriken_image, (1, 1))
 clean_outline = outlineSurf.copy()
 
 while True: # game loop
+    dt = pygame.time.get_ticks() - last_frame
+    last_frame = pygame.time.get_ticks()
     if grass_sound_timer > 0:
-        grass_sound_timer -= 1
+        grass_sound_timer -= 1 + dtf(dt)
     
     display.fill(BG_COLOR)
 
-    true_scroll[0] += (player_rect.x-scroll[0]-142)/20
-    true_scroll[1] += (player_rect.y-scroll[1]-92)/20
+    true_scroll[0] += (player.x-scroll[0]-142)/20
+    true_scroll[1] += (player.y-scroll[1]-92)/20
     scroll = true_scroll.copy()
-    scroll[0] = int(scroll[0])
-    scroll[1] = int(scroll[1])
+    scroll[0] = int(scroll[0] + dtf(dt))
+    scroll[1] = int(scroll[1] + dtf(dt))
 
     tile_rects = []
     for y in range(4):
@@ -292,42 +212,42 @@ while True: # game loop
                 display.blit(tile_index[4], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '5':
                 display.blit(tile_index[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if not tile == '0' and tile == '4':
+            if tile != '0' and tile != '4':
                 tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
             x += 1
         y += 1
 
     player_movement = [0, 0]
     if moving_right:
-        player_movement[0] += 2
+        player_movement[0] += 2 * dtf(dt)
     if moving_left:
-        if player_rect.x > spawn_x - 100:
-            player_movement[0] -= 2
-    player_movement[1] += player_y_momentum
-    player_y_momentum += 0.2 
+        if player.x > 2900:
+            player_movement[0] -= 2 * dtf(dt)
+    player_movement[1] += player_y_momentum * dtf(dt)
+    player_y_momentum += 0.2 * dtf(dt)
     if player_y_momentum > 3:
         player_y_momentum = 3
-    if player_rect.x <= spawn_x - 100:
+    if player.x <= 2900:
         pixel_font.render(display, 'You have reached the boundary', (50, 150))
     
     if player_movement[0] > 0:
         if player_movement[1] == 0: 
-            player_action,player_frame = change_action(player_action, player_frame, 'run')
-        player_flip = True
+            player.set_action('run')
+        player.set_flip(True)
     if player_movement[0] == 0:
         if player_movement[1] == 0: 
-            player_action,player_frame = change_action(player_action, player_frame, 'idle')
+            player.set_action('idle')
     if player_movement[0] < 0:
         if player_movement[1] == 0: 
-            player_action,player_frame = change_action(player_action, player_frame, 'run')
-        player_flip = False
+            player.set_action('run')
+        player.set_flip(False)
     else:
         pass # will be changed when jump animation is created
         
 
-    player_rect, collisions = move(player_rect, player_movement, tile_rects)
+    collision_types = player.move(player_movement, tile_rects)
 
-    if collisions['bottom']:
+    if collision_types['bottom']:
         player_y_momentum = 0
         air_timer = 0
         if player_movement[0] != 0:
@@ -335,16 +255,11 @@ while True: # game loop
                 grass_sound_timer = 30
                 random.choice(grass_sounds).play()
     else:
-        air_timer += 1
-
-    player_frame += 1
-    if player_frame >= len(animation_database[player_action]):
-        player_frame = 0
-    player_img_id = animation_database[player_action][player_frame]
-    player_img = animation_frames[player_img_id]
-    
-    player_center = [player_rect.centerx - scroll[0], player_rect.centery - scroll[1]]
-    crosshair_center = [crosshair_rect.x, crosshair_rect.y]
+        air_timer += 1 + dtf(dt)
+        
+    player.change_frame(1)
+    player_center = (player.get_center()[0] - scroll[0], player.get_center()[1] - scroll[1])
+    crosshair_center = [crosshair_rect.centerx, crosshair_rect.centery]
     
     rel_x, rel_y = crosshair_center[0] - player_center[0], crosshair_center[1] - player_center[1]
     angle = (180 / math.pi) * -math.atan2(rel_y, rel_x)
@@ -352,12 +267,12 @@ while True: # game loop
     if shooting == False:
         outlineSurf, bullet_rect = blitRotate(display, clean_outline, (player_center[0], player_center[1]), (0, 0), angle)
     
-    display.blit(pygame.transform.flip(player_img, player_flip, False), (player_rect.x - scroll[0], player_rect.y - scroll[1]))
-    
     mouse_pos = pygame.mouse.get_pos()
     crosshair_rect.x = mouse_pos[0]/3-crosshair.get_width()/2
     crosshair_rect.y = mouse_pos[1]/3-crosshair.get_width()/2
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
+
+    player.display(display, scroll)
 
     for event in pygame.event.get():
         if event.type == QUIT: # check for window quit
@@ -370,6 +285,11 @@ while True: # game loop
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
+            if event.key == K_e:
+                if FPS != 10:
+                    FPS = 10
+                else:
+                    FPS = 60
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = True
             if event.key == K_UP or event.key == K_w or event.key == K_SPACE:
