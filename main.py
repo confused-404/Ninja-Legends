@@ -285,11 +285,6 @@ while True: # game loop
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
-            if event.key == K_e:
-                if FPS != 10:
-                    FPS = 10
-                else:
-                    FPS = 60
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = True
             if event.key == K_UP or event.key == K_w or event.key == K_SPACE:
