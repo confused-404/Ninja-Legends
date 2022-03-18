@@ -279,9 +279,10 @@ while True: # game loop
             pygame.quit() # stop pygame
             sys.exit() # stop script
         if event.type == MOUSEBUTTONDOWN:
-            if shooting == False:
-                bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
-                shooting = True
+            if event.button == 1:
+                if shooting == False:
+                    bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
+                    shooting = True
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
