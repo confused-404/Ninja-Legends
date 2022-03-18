@@ -148,6 +148,9 @@ class Bullet:
         bullet_rect = self.bullet.get_rect(center = self.pos)
         surf.blit(self.bullet, bullet_rect)
 
+def dtf(dt):
+    return dt / 1000 * 60
+
 moving_right = False
 moving_left = False
 
@@ -159,6 +162,9 @@ spawn_x = 3000
 scroll = [0, 0]
 true_scroll = [spawn_x, 0]
 
+dt = 0 # delta time
+last_frame = pygame.time.get_ticks()
+
 player = e.entity(3000, 0, 11, 15, 'player', True)
 
 outlineSurf = pygame.Surface((13, 13))
@@ -167,16 +173,18 @@ outlineSurf.blit(shuriken_image, (1, 1))
 clean_outline = outlineSurf.copy()
 
 while True: # game loop
+    dt = pygame.time.get_ticks() - last_frame
+    last_frame = pygame.time.get_ticks()
     if grass_sound_timer > 0:
-        grass_sound_timer -= 1
+        grass_sound_timer -= 1 + dtf(dt)
     
     display.fill(BG_COLOR)
 
     true_scroll[0] += (player.x-scroll[0]-142)/20
     true_scroll[1] += (player.y-scroll[1]-92)/20
     scroll = true_scroll.copy()
-    scroll[0] = int(scroll[0])
-    scroll[1] = int(scroll[1])
+    scroll[0] = int(scroll[0] + dtf(dt))
+    scroll[1] = int(scroll[1] + dtf(dt))
 
     tile_rects = []
     for y in range(4):
@@ -211,12 +219,12 @@ while True: # game loop
 
     player_movement = [0, 0]
     if moving_right:
-        player_movement[0] += 2
+        player_movement[0] += 2 * dtf(dt)
     if moving_left:
         if player.x > 2900:
-            player_movement[0] -= 2
-    player_movement[1] += player_y_momentum
-    player_y_momentum += 0.2 
+            player_movement[0] -= 2 * dtf(dt)
+    player_movement[1] += player_y_momentum * dtf(dt)
+    player_y_momentum += 0.2 * dtf(dt)
     if player_y_momentum > 3:
         player_y_momentum = 3
     if player.x <= 2900:
@@ -247,7 +255,7 @@ while True: # game loop
                 grass_sound_timer = 30
                 random.choice(grass_sounds).play()
     else:
-        air_timer += 1
+        air_timer += 1 + dtf(dt)
         
     player.change_frame(1)
     player_center = (player.get_center()[0] - scroll[0], player.get_center()[1] - scroll[1])
@@ -277,6 +285,11 @@ while True: # game loop
         if event.type == KEYDOWN:
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
+            if event.key == K_e:
+                if FPS != 10:
+                    FPS = 10
+                else:
+                    FPS = 60
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = True
             if event.key == K_UP or event.key == K_w or event.key == K_SPACE:
