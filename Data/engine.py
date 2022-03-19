@@ -1,4 +1,4 @@
-import pygame, math, os, sys, spritesheet, time, random, noise, math
+import pygame, math, os, sys, time, random, noise, math
 from pygame.locals import *
 
 global e_colorkey
@@ -11,7 +11,7 @@ def set_global_colorkey(colorkey):
 # physics core
 
 # 2d collisions test
-def collision_test(object_1,object_list):
+def collision_test(object_1,object_list, surf):
     collision_list = []
     for obj in object_list:
         if obj.colliderect(object_1):
@@ -28,10 +28,10 @@ class physics_obj(object):
         self.x = x
         self.y = y
        
-    def move(self,movement,platforms,ramps=[]):
+    def move(self,movement,platforms, surf, ramps=[]):
         self.x += movement[0]
         self.rect.x = int(self.x)
-        block_hit_list = collision_test(self.rect,platforms)
+        block_hit_list = collision_test(self.rect,platforms, surf)
         collision_types = {'top':False,'bottom':False,'right':False,'left':False,'slant_bottom':False,'data':[]}
         # added collision data to "collision_types". ignore the poorly chosen variable name
         for block in block_hit_list:
@@ -48,7 +48,7 @@ class physics_obj(object):
             self.x = self.rect.x
         self.y += movement[1]
         self.rect.y = int(self.y)
-        block_hit_list = collision_test(self.rect,platforms)
+        block_hit_list = collision_test(self.rect,platforms, surf)
         for block in block_hit_list:
             markers = [False,False,False,False]
             if movement[1] > 0:
@@ -138,8 +138,8 @@ class entity(object):
         self.obj.rect.x = x
         self.obj.rect.y = y
  
-    def move(self,momentum,platforms,ramps=[]):
-        collisions = self.obj.move(momentum,platforms,ramps)
+    def move(self,momentum,platforms,surf, ramps=[]):
+        collisions = self.obj.move(momentum,platforms,surf, ramps)
         self.x = self.obj.x
         self.y = self.obj.y
         return collisions

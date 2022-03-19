@@ -65,8 +65,16 @@ tile_index = {1:grass_image,
 
 game_map = {}
 
-TILE_SIZE = grass_image.get_width()
+TILE_SIZE = tile_index[1].get_width()
 CHUNK_SIZE = 8
+
+def collision_test(object_1,object_list, surf):
+    collision_list = []
+    for obj in object_list:
+        ### pygame.draw.rect(display, (0,0,255), obj)
+        if obj.colliderect(object_1):
+            collision_list.append(obj)
+    return collision_list
 
 def generate_chunk(x,y):
     chunk_data = []
@@ -139,10 +147,12 @@ class Bullet:
         self.speed = 3
         bullet_image = pygame.transform.rotate(self.bullet, angle)
         self.pos = (x + self.offset_x, y + self.offset_y)
+        self.bullet_rect = self.bullet.get_rect(center = self.pos)
     
     def update(self):
         self.pos = (self.pos[0] + self.dir[0]*self.speed,
                     self.pos[1] + self.dir[1]*self.speed)
+        self.bullet_rect = self.bullet.get_rect(center = self.pos)
         
     def draw(self, surf):
         bullet_rect = self.bullet.get_rect(center = self.pos)
@@ -198,25 +208,7 @@ while True: # game loop
                 display.blit(tile_index[tile[1]],(tile[0][0]*16-scroll[0],tile[0][1]*16-scroll[1]))
                 if tile[1] in [1,2, 3, 4] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
                     tile_rects.append(pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16))    
-    y = 0
-    for row in game_map:
-        x = 0
-        for tile in row:
-            if tile == '2':
-                display.blit(tile_index[2], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '1':
-                display.blit(tile_index[1], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '3':
-                display.blit(tile_index[3], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '4':
-                display.blit(tile_index[4], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile == '5':
-                display.blit(tile_index[5], (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-            if tile != '0' and tile != '4':
-                tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-            x += 1
-        y += 1
-
+    
     player_movement = [0, 0]
     if moving_right:
         player_movement[0] += 2 * dtf(dt)
@@ -243,9 +235,8 @@ while True: # game loop
         player.set_flip(False)
     else:
         pass # will be changed when jump animation is created
-        
 
-    collision_types = player.move(player_movement, tile_rects)
+    collision_types = player.move(player_movement, tile_rects, display)
 
     if collision_types['bottom']:
         player_y_momentum = 0
@@ -304,10 +295,24 @@ while True: # game loop
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = False
         
-    for bullet in bullets[:]:
+    for bullet in bullets:
         bullet.update()
+        collisions = collision_test(bullet.bullet_rect, tile_rects, display)
+        ### pygame.draw.rect(display, (255, 0, 0), bullet.bullet_rect)
+        if collisions:
+            ### print('collisions')
+            try:
+                bullets.remove(bullet)
+            except:
+                pass
+            shooting = False
+        else:
+            ### print('no collisions')
         if not display.get_rect().collidepoint(bullet.pos):
-            bullets.remove(bullet)
+            try:
+                bullets.remove(bullet)
+            except:
+                pass
             shooting = False
             
     for bullet in bullets:
