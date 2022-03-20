@@ -170,6 +170,16 @@ dt = 0 # delta time
 last_frame = pygame.time.get_ticks()
 
 player = e.entity(3000, 0, 11, 15, 'player', True)
+enemies = {}
+for i in range(10):
+    enemy_x = random.randint(3100, 4000)
+    enemy = e.entity(enemy_x, 0, 11, 15, 'enemy', True)
+    collisions = None
+    movement = [0, 0]
+    momentum = 0
+    enemies['enemy' + str(i)] = [enemy, collisions, movement, momentum]
+    
+directions = ['left', 'right']
 
 outlineSurf = pygame.Surface((13, 13))
 perfect_outline_2(shuriken_image, (1,1), outlineSurf)
@@ -203,6 +213,25 @@ while True: # game loop
                 if tile[1] in [1,2, 3, 4] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
                     tile_rects.append(pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16))    
     
+    for enemy in enemies:
+        enemies[enemy][2] = [0, 0]
+        enemy_y_momentum = enemies[enemy][3]
+        direction = random.choice(directions)
+        if direction == 'right':
+            enemies[enemy][2][0] += 1 * dtf(dt)
+        if direction == 'left':
+            enemies[enemy][2][0] -= 1 * dtf(dt)
+        movement = enemies[enemy][2]
+        if movement[0] > 0:
+            enemies[enemy][0].set_flip(True)
+        if movement[0] < 0:
+            enemies[enemy][0].set_flip(False)
+        enemies[enemy][2][1] += enemy_y_momentum * dtf(dt)
+        enemy_y_momentum += 0.2 * dtf(dt)
+        if enemy_y_momentum > 3:
+            enemy_y_momentum = 3
+        enemies[enemy][3] = enemy_y_momentum
+    
     player_movement = [0, 0]
     if moving_right:
         player_movement[0] += 2 * dtf(dt)
@@ -231,6 +260,9 @@ while True: # game loop
         pass # will be changed when jump animation is created
 
     collision_types = player.move(player_movement, tile_rects, display)
+    for enemy in enemies:
+        enemy_collision_types = enemies[enemy][0].move(enemies[enemy][2], tile_rects, display)
+        enemies[enemy][1] = enemy_collision_types
 
     if collision_types['bottom']:
         player_y_momentum = 0
@@ -243,6 +275,8 @@ while True: # game loop
         air_timer += 1 + dtf(dt)
         
     player.change_frame(1)
+    for enemy in enemies:
+        enemies[enemy][0].change_frame(1)
     player_center = (player.get_center()[0] - scroll[0], player.get_center()[1] - scroll[1])
     crosshair_center = [crosshair_rect.centerx, crosshair_rect.centery]
     
@@ -258,6 +292,8 @@ while True: # game loop
     display.blit(crosshair, (crosshair_rect.x, crosshair_rect.y))
 
     player.display(display, scroll)
+    for enemy in enemies:
+        enemies[enemy][0].display(display, scroll)
 
     for event in pygame.event.get():
         if event.type == QUIT: # check for window quit
