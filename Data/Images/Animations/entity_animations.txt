@@ -1,3 +1,4 @@
 player/idle/ 28;7;28;7 loop
 player/run/ 10;10 loop
 enemy/idle/ 28;7;28;7 loop
+enemy/run/ 10;10 loop

@@ -224,10 +224,14 @@ while True: # game loop
                 enemies[enemy][2][0] = 1
             if player.x < enemies[enemy][0].x - 10:
                 enemies[enemy][2][0] = -1
-            if movement[0] > 0:
+            if enemies[enemy][2][0] > 0:
+                enemies[enemy][0].set_action('run')
                 enemies[enemy][0].set_flip(True)
-            if movement[0] < 0:
+            if enemies[enemy][2][0] < 0:
+                enemies[enemy][0].set_action('run')
                 enemies[enemy][0].set_flip(False)
+            if enemies[enemy][2][0] == 0:
+                enemies[enemy][0].set_action('idle')
             enemies[enemy][2][1] += enemies[enemy][3] * dtf(dt)
             enemies[enemy][3] += 0.2 * dtf(dt)
                 
@@ -242,7 +246,7 @@ while True: # game loop
                 if enemies[enemy][4] < 6:
                     enemies[enemy][3] = -1.5
         
-        enemies[enemy][0].change_frame(1)
+            enemies[enemy][0].change_frame(1)
         
     player_movement = [0, 0]
     if moving_right:
