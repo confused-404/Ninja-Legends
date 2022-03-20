@@ -308,6 +308,7 @@ while True: # game loop
             shooting = False
         else:
             ### print('no collisions')
+            pass
         if not display.get_rect().collidepoint(bullet.pos):
             try:
                 bullets.remove(bullet)
