@@ -171,13 +171,13 @@ last_frame = pygame.time.get_ticks()
 
 player = e.entity(3000, 0, 11, 15, 'player', True)
 enemies = {}
-for i in range(10):
-    enemy_x = random.randint(3100, 4000)
+for i in range(5):
+    enemy_x = random.randint(3400, 4000)
     enemy = e.entity(enemy_x, 0, 11, 15, 'enemy', True)
     collisions = None
     movement = [0, 0]
     momentum = 0
-    enemies['enemy' + str(i)] = [enemy, collisions, movement, momentum]
+    enemies['enemy' + str(i)] = [enemy, collisions, movement, momentum, 0]
     
 directions = ['left', 'right']
 
@@ -213,25 +213,37 @@ while True: # game loop
                 if tile[1] in [1,2, 3, 4] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
                     tile_rects.append(pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16))    
     
-    for enemy in enemies:
-        enemies[enemy][2] = [0, 0]
-        enemy_y_momentum = enemies[enemy][3]
-        direction = random.choice(directions)
-        if direction == 'right':
-            enemies[enemy][2][0] += 1 * dtf(dt)
-        if direction == 'left':
-            enemies[enemy][2][0] -= 1 * dtf(dt)
-        movement = enemies[enemy][2]
-        if movement[0] > 0:
-            enemies[enemy][0].set_flip(True)
-        if movement[0] < 0:
-            enemies[enemy][0].set_flip(False)
-        enemies[enemy][2][1] += enemy_y_momentum * dtf(dt)
-        enemy_y_momentum += 0.2 * dtf(dt)
-        if enemy_y_momentum > 3:
-            enemy_y_momentum = 3
-        enemies[enemy][3] = enemy_y_momentum
+    display_r = pygame.Rect(scroll[0], scroll[1], 300, 200)
     
+    for enemy in enemies:
+        if display_r.colliderect(enemies[enemy][0].obj.rect):
+            if enemies[enemy][3] > 3:
+                enemies[enemy][3] = 3
+            enemies[enemy][2] = [0, enemies[enemy][3]]
+            if player.x > enemies[enemy][0].x + 10:
+                enemies[enemy][2][0] = 1
+            if player.x < enemies[enemy][0].x - 10:
+                enemies[enemy][2][0] = -1
+            if movement[0] > 0:
+                enemies[enemy][0].set_flip(True)
+            if movement[0] < 0:
+                enemies[enemy][0].set_flip(False)
+            enemies[enemy][2][1] += enemies[enemy][3] * dtf(dt)
+            enemies[enemy][3] += 0.2 * dtf(dt)
+                
+            enemy_collision_types = enemies[enemy][0].move(enemies[enemy][2], tile_rects, display)
+            enemies[enemy][1] = enemy_collision_types
+            if enemies[enemy][1]['bottom']:
+                enemies[enemy][3] = 0
+                enemies[enemy][4] = 0
+            else:
+                enemies[enemy][4] += 1 * dtf(dt)
+            if enemies[enemy][1]['right'] or enemies[enemy][1]['left']:
+                if enemies[enemy][4] < 6:
+                    enemies[enemy][3] = -1.5
+        
+        enemies[enemy][0].change_frame(1)
+        
     player_movement = [0, 0]
     if moving_right:
         player_movement[0] += 2 * dtf(dt)
@@ -260,9 +272,6 @@ while True: # game loop
         pass # will be changed when jump animation is created
 
     collision_types = player.move(player_movement, tile_rects, display)
-    for enemy in enemies:
-        enemy_collision_types = enemies[enemy][0].move(enemies[enemy][2], tile_rects, display)
-        enemies[enemy][1] = enemy_collision_types
 
     if collision_types['bottom']:
         player_y_momentum = 0
@@ -275,8 +284,6 @@ while True: # game loop
         air_timer += 1 + dtf(dt)
         
     player.change_frame(1)
-    for enemy in enemies:
-        enemies[enemy][0].change_frame(1)
     player_center = (player.get_center()[0] - scroll[0], player.get_center()[1] - scroll[1])
     crosshair_center = [crosshair_rect.centerx, crosshair_rect.centery]
     
