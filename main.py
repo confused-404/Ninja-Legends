@@ -68,14 +68,6 @@ game_map = {}
 TILE_SIZE = tile_index[1].get_width()
 CHUNK_SIZE = 8
 
-def collision_test(object_1,object_list, surf):
-    collision_list = []
-    for obj in object_list:
-        ### pygame.draw.rect(display, (0,0,255), obj)
-        if obj.colliderect(object_1):
-            collision_list.append(obj)
-    return collision_list
-
 def generate_chunk(x,y):
     chunk_data = []
     for y_pos in range(CHUNK_SIZE):
@@ -157,6 +149,8 @@ class Bullet:
     def draw(self, surf):
         bullet_rect = self.bullet.get_rect(center = self.pos)
         surf.blit(self.bullet, bullet_rect)
+    def collision_test(self, rect):
+        return self.bullet_rect.colliderect(rect)
 
 def dtf(dt):
     return dt / 1000 * 60
@@ -297,18 +291,6 @@ while True: # game loop
         
     for bullet in bullets:
         bullet.update()
-        collisions = collision_test(bullet.bullet_rect, tile_rects, display)
-        ### pygame.draw.rect(display, (255, 0, 0), bullet.bullet_rect)
-        if collisions:
-            ### print('collisions')
-            try:
-                bullets.remove(bullet)
-            except:
-                pass
-            shooting = False
-        else:
-            ### print('no collisions')
-            pass
         if not display.get_rect().collidepoint(bullet.pos):
             try:
                 bullets.remove(bullet)
