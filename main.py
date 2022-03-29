@@ -1,4 +1,4 @@
-import pygame, sys, Data.Scripts.spritesheet as spritesheet, time, random, Data.Scripts.font_loader as font_loader, noise, math # import pygame and sys
+import pygame, sys, Data.Scripts.spritesheet as spritesheet, time, random, Data.Scripts.font_loader as font_loader, noise, math, csv # import pygame and sys
 
 import Data.engine as e
 
@@ -16,24 +16,61 @@ screen = pygame.display.set_mode(WINDOW_SIZE,0,32) # initiate screen
 display = pygame.Surface((300, 200))
 
 BG_COLOR = (39, 39, 68)
+BLACK = (0, 0, 0)
 e.set_global_colorkey(BG_COLOR)
 
 FPS = 60
 
 pygame.mouse.set_visible(False)
 
+### IMAGE LOADING
+
 e.load_animations('Data/Images/Animations/')
 
+TILE_SIZE = 16
+
 tileset = spritesheet.Spritesheet('data/images/Tiles/tileset.png')
-grass_image = pygame.transform.scale(tileset.get_sprite(0, 0, 16, 16), (16,16))
-dirt_image = pygame.transform.scale(tileset.get_sprite(16, 0, 16, 16), (16,16))
-bg_image = tileset.get_sprite(32, 0, 16, 16)
-left_grass_image = tileset.get_sprite(48, 0, 16, 16).convert()
-left_grass_image.set_colorkey((255, 255, 255))
-right_grass_image = pygame.transform.flip(left_grass_image, True, False)
-plant = spritesheet.Spritesheet('data/images/Tiles/plant.png')
-plant_image = plant.get_sprite(0,0,16,16).convert()
-plant_image.set_colorkey((BG_COLOR))
+ 
+top_grass = tileset.get_sprite(TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
+top_grass.set_colorkey(BLACK)
+left_top_grass = tileset.get_sprite(0, 0, TILE_SIZE, TILE_SIZE)
+left_top_grass.set_colorkey(BLACK)
+right_top_grass = tileset.get_sprite(2*TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
+right_top_grass.set_colorkey(BLACK)
+left_middle_dirt = tileset.get_sprite(0, TILE_SIZE, TILE_SIZE, TILE_SIZE)
+left_middle_dirt.set_colorkey(BLACK)
+center_middle_dirt = tileset.get_sprite(TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE)
+center_middle_dirt.set_colorkey(BLACK)
+right_middle_dirt = tileset.get_sprite(2*TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE)
+right_middle_dirt.set_colorkey(BLACK)
+left_bottom_dirt = tileset.get_sprite(0, 2*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+left_bottom_dirt.set_colorkey(BLACK)
+center_bottom_dirt = tileset.get_sprite(TILE_SIZE, 2*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+center_bottom_dirt.set_colorkey(BLACK)
+right_bottom_dirt = tileset.get_sprite(2*TILE_SIZE, 2*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+right_bottom_dirt.set_colorkey(BLACK)
+
+left_horizontal_grass = tileset.get_sprite(0, 3*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+left_horizontal_grass.set_colorkey(BLACK)
+center_horizontal_grass = tileset.get_sprite(TILE_SIZE, 3*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+center_horizontal_grass.set_colorkey(BLACK)
+right_horizontal_grass = tileset.get_sprite(2*TILE_SIZE, 3*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+right_horizontal_grass.set_colorkey(BLACK)
+
+top_vertical_grass = tileset.get_sprite(3*TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
+top_vertical_grass.set_colorkey(BLACK)
+middle_vertical_grass = tileset.get_sprite(3*TILE_SIZE, TILE_SIZE, TILE_SIZE, TILE_SIZE)
+middle_vertical_grass.set_colorkey(BLACK)
+bottom_vertical_grass = tileset.get_sprite(3*TILE_SIZE, 2*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+bottom_vertical_grass.set_colorkey(BLACK)
+
+independent_grass = tileset.get_sprite(3*TILE_SIZE,3*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+independent_grass.set_colorkey(BLACK)
+
+plant = tileset.get_sprite(4*TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
+plant.set_colorkey(BLACK)
+
+ 
 crosshair = pygame.image.load('Data/Images/Graphics/crosshair.png').convert()
 crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height())
 crosshair.set_colorkey((0, 0, 0))
@@ -55,37 +92,38 @@ pygame.mixer.music.load('Data/Audio/music.wav')
 pygame.mixer.music.play(-1)
 muted = False
 
-tile_index = {1:grass_image,
-              2:dirt_image,
-              0:bg_image,
-              3:left_grass_image,
-              4:right_grass_image,
-              5:plant_image
+tile_index = {1:top_grass,
+              0:left_top_grass,
+              2:right_top_grass,
+              5:left_middle_dirt,
+              6:center_middle_dirt,
+              7:right_middle_dirt,
+              10:left_bottom_dirt,
+              11:center_bottom_dirt,
+              12:right_bottom_dirt,
+              
+              15:left_horizontal_grass,
+              16:center_horizontal_grass,
+              17:right_horizontal_grass,
+              
+              3:top_vertical_grass,
+              8:middle_vertical_grass,
+              13:bottom_vertical_grass,
+              
+              18:independent_grass,
+              
+              4:plant,
+              
+              -1:None
               }
 
-game_map = {}
-
-TILE_SIZE = tile_index[1].get_width()
-CHUNK_SIZE = 8
-
-def generate_chunk(x,y):
-    chunk_data = []
-    for y_pos in range(CHUNK_SIZE):
-        for x_pos in range(CHUNK_SIZE):
-            target_x = x * CHUNK_SIZE + x_pos
-            target_y = y * CHUNK_SIZE + y_pos
-            tile_type = 0 # nothing
-            height = int(noise.pnoise1(target_x * 0.1, repeat=9999999) * 4)
-            if target_y >= 9 - height:
-                tile_type = 2 # dirt
-            elif target_y == 8 - height:
-                tile_type = 1 # grass
-            elif target_y == 8 - height - 1:
-                if random.randint(1,3) == 1:
-                    tile_type = 5 # plant
-            if tile_type != 0:
-                chunk_data.append([[target_x,target_y],tile_type])
-    return chunk_data                   
+game_maps = [[], [], []]
+level = 0
+with open('Data/Maps/level0_csv.csv', 'r') as f:
+    csv_reader = csv.reader(f)
+    for x in csv_reader:
+        x = [int(n) for n in x]
+        game_maps[0].append(x)
 
 def blitRotate(surf, cleanimage, pos, originPos, angle):
     image_rect = cleanimage.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
@@ -161,25 +199,23 @@ moving_left = False
 player_y_momentum = 0
 air_timer = 0
 
-spawn_x = 3000
+spawn_x = 170
 
 scroll = [0, 0]
-true_scroll = [spawn_x, 0]
+true_scroll = [0, 0]
 
 dt = 0 # delta time
 last_frame = pygame.time.get_ticks()
 
-player = e.entity(3000, 0, 11, 15, 'player', True)
+player = e.entity(spawn_x, 0, 11, 15, 'player', True)
 enemies = {}
-for i in range(5):
-    enemy_x = random.randint(3400, 4000)
+for i in range(0):
+    enemy_x = random.randint(3400, 6000)
     enemy = e.entity(enemy_x, 0, 11, 15, 'enemy', True)
     collisions = None
     movement = [0, 0]
     momentum = 0
     enemies['enemy' + str(i)] = [enemy, collisions, movement, momentum, 0]
-    
-directions = ['left', 'right']
 
 outlineSurf = pygame.Surface((13, 13))
 perfect_outline_2(shuriken_image, (1,1), outlineSurf)
@@ -200,19 +236,20 @@ while True: # game loop
     scroll[0] = int(scroll[0] + dtf(dt))
     scroll[1] = int(scroll[1] + dtf(dt))
 
-    tile_rects = []
-    for y in range(4):
-        for x in range(4):
-            target_x = x - 1 + int(round(scroll[0]/(CHUNK_SIZE*16)))
-            target_y = y - 1 + int(round(scroll[1]/(CHUNK_SIZE*16)))
-            target_chunk = str(target_x) + ';' + str(target_y)
-            if target_chunk not in game_map:
-                game_map[target_chunk] = generate_chunk(target_x,target_y)
-            for tile in game_map[target_chunk]:
-                display.blit(tile_index[tile[1]],(tile[0][0]*16-scroll[0],tile[0][1]*16-scroll[1]))
-                if tile[1] in [1,2, 3, 4] and not pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16) in tile_rects:
-                    tile_rects.append(pygame.Rect(tile[0][0]*16,tile[0][1]*16,16,16))    
+    level_map = game_maps[level]
     
+    tile_rects = []
+    y = 0
+    for layer in level_map:
+        x = 0
+        for tile in layer:
+            if tile != -1:
+                display.blit(tile_index[tile],(x*TILE_SIZE-scroll[0],y*TILE_SIZE-scroll[1]))
+            if tile != -1 and tile != 4:
+                tile_rects.append(pygame.Rect(x*TILE_SIZE,y*TILE_SIZE,TILE_SIZE,TILE_SIZE))
+            x += 1
+        y += 1
+
     display_r = pygame.Rect(scroll[0], scroll[1], 300, 200)
     
     for enemy in enemies:
@@ -252,14 +289,17 @@ while True: # game loop
     if moving_right:
         player_movement[0] += 2 * dtf(dt)
     if moving_left:
-        if player.x > 2900:
+        if player.x > spawn_x:
             player_movement[0] -= 2 * dtf(dt)
     player_movement[1] += player_y_momentum * dtf(dt)
     player_y_momentum += 0.2 * dtf(dt)
     if player_y_momentum > 3:
         player_y_momentum = 3
-    if player.x <= 2900:
+    if player.x <= -100:
         pixel_font.render(display, 'You have reached the boundary', (50, 150))
+    print(player.x)
+    if player.x >= 100:
+        pass
     
     if player_movement[0] > 0:
         if player_movement[1] == 0: 
@@ -323,7 +363,7 @@ while True: # game loop
             if event.key == K_UP or event.key == K_w or event.key == K_SPACE:
                 if air_timer < 6:
                     jump_sound.play()
-                    player_y_momentum = -4
+                    player_y_momentum = -5.5
             if event.key == K_m:
                 if muted == False:
                     pygame.mixer.music.fadeout(1000)
@@ -338,6 +378,18 @@ while True: # game loop
         
     for bullet in bullets:
         bullet.update()
+        
+        for enemy in enemies:
+            pygame.draw.rect(display, (0, 0, 255), enemies[enemy][0].obj.rect)
+            pygame.draw.rect(display, (255, 0, 0), bullet.bullet_rect)
+            if enemies[enemy][0].obj.rect.colliderect(bullet.bullet_rect):
+                try:
+                    bullets.remove(bullet)
+                    enemies.pop(enemy)
+                except:
+                    pass
+                shooting = False
+        
         if not display.get_rect().collidepoint(bullet.pos):
             try:
                 bullets.remove(bullet)
@@ -346,7 +398,8 @@ while True: # game loop
             shooting = False
             
     for bullet in bullets:
-        bullet.draw(display)
+        if bullet:
+            bullet.draw(display)
 
     frt = show_fps()
 
