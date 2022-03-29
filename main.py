@@ -14,6 +14,10 @@ WINDOW_SIZE = (900,600) # set up window size
 screen = pygame.display.set_mode(WINDOW_SIZE,0,32) # initiate screen
 
 display = pygame.Surface((300, 200))
+alphaSurface = pygame.Surface((300, 200))
+alphaSurface.fill((0, 0, 0))
+alphaSurface.set_alpha(0)
+alph = 0
 
 BG_COLOR = (39, 39, 68)
 BLACK = (0, 0, 0)
@@ -221,6 +225,7 @@ outlineSurf = pygame.Surface((13, 13))
 perfect_outline_2(shuriken_image, (1,1), outlineSurf)
 outlineSurf.blit(shuriken_image, (1, 1))
 clean_outline = outlineSurf.copy()
+first_collision = False
 
 while True: # game loop
     dt = pygame.time.get_ticks() - last_frame
@@ -286,38 +291,40 @@ while True: # game loop
             enemies[enemy][0].change_frame(1)
         
     player_movement = [0, 0]
-    if moving_right:
-        player_movement[0] += 2 * dtf(dt)
-    if moving_left:
-        if player.x > spawn_x:
-            player_movement[0] -= 2 * dtf(dt)
+    if first_collision:
+        if moving_right:
+            player_movement[0] += 2 * dtf(dt)
+        if moving_left:
+            if player.x > spawn_x:
+                player_movement[0] -= 2 * dtf(dt)
     player_movement[1] += player_y_momentum * dtf(dt)
     player_y_momentum += 0.2 * dtf(dt)
     if player_y_momentum > 3:
         player_y_momentum = 3
-    if player.x <= -100:
-        pixel_font.render(display, 'You have reached the boundary', (50, 150))
-    print(player.x)
-    if player.x >= 100:
-        pass
-    
-    if player_movement[0] > 0:
-        if player_movement[1] == 0: 
-            player.set_action('run')
-        player.set_flip(True)
-    if player_movement[0] == 0:
-        if player_movement[1] == 0: 
-            player.set_action('idle')
-    if player_movement[0] < 0:
-        if player_movement[1] == 0: 
-            player.set_action('run')
-        player.set_flip(False)
-    else:
-        pass # will be changed when jump animation is created
+        if player.x <= -100:
+            boundary_text = pixel_font.render(display, 'You have reached the boundary', (50, 150))
+        if player.y >= 500:
+            player.set_pos(spawn_x, 0)
+            first_collision = False
+        
+        if player_movement[0] > 0:
+            if player_movement[1] == 0: 
+                player.set_action('run')
+            player.set_flip(True)
+        if player_movement[0] == 0:
+            if player_movement[1] == 0: 
+                player.set_action('idle')
+        if player_movement[0] < 0:
+            if player_movement[1] == 0: 
+                player.set_action('run')
+            player.set_flip(False)
+        else:
+            pass # will be changed when jump animation is created
 
     collision_types = player.move(player_movement, tile_rects, display)
 
     if collision_types['bottom']:
+        first_collision = True
         player_y_momentum = 0
         air_timer = 0
         if player_movement[0] != 0:
@@ -403,6 +410,12 @@ while True: # game loop
 
     frt = show_fps()
 
+    ### Fade In/ Fade OUt:
+    
+    alph += 0.001
+    alphaSurface.set_alpha(alph)
+    display.blit(alphaSurface, (0, 0))
+    
     surf = pygame.transform.scale(display, WINDOW_SIZE)
     screen.blit(surf, (0, 0))
     pygame.display.update() # update display
