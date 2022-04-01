@@ -74,7 +74,6 @@ independent_grass.set_colorkey(BLACK)
 plant = tileset.get_sprite(4*TILE_SIZE, 0, TILE_SIZE, TILE_SIZE)
 plant.set_colorkey(BLACK)
 
- 
 crosshair = pygame.image.load('Data/Images/Graphics/crosshair.png').convert()
 crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height())
 crosshair.set_colorkey((0, 0, 0))
@@ -163,6 +162,33 @@ pixel_font = font_loader.Font('Data/Images/Fonts/pixelfont.png')
 bullets = []
 shooting = False
 
+class Background():
+      def __init__(self, image, speed):
+            self.bgimage = image
+            self.rectBGimg = self.bgimage.get_rect()
+ 
+            self.bgX1 = 0
+ 
+            self.bgX2 = 304
+            
+            self.oldscroll = [0, 0]
+ 
+            self.moving_speed = speed
+         
+      def update(self, scroll, player_x, player_deaths):
+        if self.bgX1 <= -self.rectBGimg.width:
+            self.bgX1 = self.rectBGimg.width
+        if self.bgX2 <= -self.rectBGimg.width:
+            self.bgX2 = self.rectBGimg.width
+        self.bgX1 -= (scroll[0] - self.oldscroll[0]) * self.moving_speed
+        self.bgX2 -= (scroll[0] - self.oldscroll[0]) * self.moving_speed
+        self.oldscroll = scroll
+            
+             
+      def render(self):
+         display.blit(self.bgimage, (self.bgX1, 0))
+         display.blit(self.bgimage, (self.bgX2, 0))
+
 class Bullet:
     def __init__(self, x, y, rel_x, rel_y, angle, bullet_image, shuriken_center):
         self.dir = (rel_x, rel_y)
@@ -212,6 +238,7 @@ dt = 0 # delta time
 last_frame = pygame.time.get_ticks()
 
 player = e.entity(spawn_x, 0, 11, 15, 'player', True)
+player_deaths = []
 enemies = {}
 for i in range(0):
     enemy_x = random.randint(3400, 6000)
@@ -226,6 +253,11 @@ perfect_outline_2(shuriken_image, (1,1), outlineSurf)
 outlineSurf.blit(shuriken_image, (1, 1))
 clean_outline = outlineSurf.copy()
 first_collision = False
+
+foreground = pygame.image.load("Data/Images/Tiles/foreground.png")
+middleground = pygame.image.load("Data/Images/Tiles/middleground.png")
+background = pygame.image.load("Data/Images/Tiles/background.png")
+background_layers = [Background(background, .5), Background(middleground, 1), Background(foreground, 2)]
 
 while True: # game loop
     dt = pygame.time.get_ticks() - last_frame
@@ -242,6 +274,11 @@ while True: # game loop
     scroll[1] = int(scroll[1] + dtf(dt))
 
     level_map = game_maps[level]
+    
+    for bg in background_layers:
+        bg.update(scroll, player.x, player_deaths)
+        bg.render()
+        
     
     tile_rects = []
     y = 0
@@ -306,20 +343,21 @@ while True: # game loop
         if player.y >= 500:
             player.set_pos(spawn_x, 0)
             first_collision = False
+            player_deaths.append(True)
         
-        if player_movement[0] > 0:
-            if player_movement[1] == 0: 
-                player.set_action('run')
-            player.set_flip(True)
-        if player_movement[0] == 0:
-            if player_movement[1] == 0: 
-                player.set_action('idle')
-        if player_movement[0] < 0:
-            if player_movement[1] == 0: 
-                player.set_action('run')
-            player.set_flip(False)
-        else:
-            pass # will be changed when jump animation is created
+    if player_movement[0] > 0:
+        if player_movement[1] == 0: 
+            player.set_action('run')
+        player.set_flip(True)
+    if player_movement[0] == 0:
+        if player_movement[1] == 0: 
+            player.set_action('idle')
+    if player_movement[0] < 0:
+        if player_movement[1] == 0: 
+            player.set_action('run')
+        player.set_flip(False)
+    else:
+        pass # will be changed when jump animation is created
 
     collision_types = player.move(player_movement, tile_rects, display)
 
