@@ -163,7 +163,7 @@ class Background():
             self.bgimage = image
             self.rectBGimg = [296, 200]
  
-            self.bgX1 = 0
+            self.bgX1 = -4
  
             self.bgX2 = 296
             
@@ -195,7 +195,7 @@ class Background():
          
       def re_init(self):
  
-            self.bgX1 = 0
+            self.bgX1 = -4
  
             self.bgX2 = 296
             
@@ -293,6 +293,9 @@ while True: # game loop
         if player_died:
             bg.re_init()
             true_scroll = [0, 0]
+            scroll = true_scroll.copy()
+            scroll[0] = int(scroll[0] + dtf(dt))
+            scroll[1] = int(scroll[1] + dtf(dt))
         bg.update(scroll, player.x, player_died)
         bg.render()
         
