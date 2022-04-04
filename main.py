@@ -14,10 +14,6 @@ WINDOW_SIZE = (900,600) # set up window size
 screen = pygame.display.set_mode(WINDOW_SIZE,0,32) # initiate screen
 
 display = pygame.Surface((300, 200))
-alphaSurface = pygame.Surface((300, 200))
-alphaSurface.fill((0, 0, 0))
-alphaSurface.set_alpha(0)
-alph = 0
 
 BG_COLOR = (39, 39, 68)
 BLACK = (0, 0, 0)
@@ -476,10 +472,6 @@ while True: # game loop
     frt = show_fps()
 
     ### Fade In/ Fade OUt:
-    
-    alph += 0.001
-    alphaSurface.set_alpha(alph)
-    display.blit(alphaSurface, (0, 0))
     
     surf = pygame.transform.scale(display, WINDOW_SIZE)
     screen.blit(surf, (0, 0))
