@@ -163,7 +163,7 @@ class Background():
             self.bgimage = image
             self.rectBGimg = [296, 200]
  
-            self.bgX1 = -4
+            self.bgX1 = 0
  
             self.bgX2 = 296
             
@@ -195,7 +195,7 @@ class Background():
          
       def re_init(self):
  
-            self.bgX1 = -4
+            self.bgX1 = 0
  
             self.bgX2 = 296
             
@@ -242,14 +242,15 @@ moving_left = False
 player_y_momentum = 0
 
 spawn_x = 170
+spawn_y = 200
 
-scroll = [0, 0]
-true_scroll = [0, 0]
+scroll = [spawn_x, spawn_y]
+true_scroll = [spawn_x, spawn_y]
 
 dt = 0 # delta time
 last_frame = pygame.time.get_ticks()
 
-player = e.entity(spawn_x, 0, 11, 15, 'player', True)
+player = e.entity(spawn_x, spawn_y, 11, 15, 'player', True)
 player_died = False
 player_jump = False
 player_jump2 = False
@@ -360,8 +361,8 @@ while True: # game loop
         player_y_momentum = 3
         if player.x <= -100:
             boundary_text = pixel_font.render(display, 'You have reached the boundary', (50, 150))
-        if player.y >= 500:
-            player.set_pos(spawn_x, 0)
+        if player.y >= 400:
+            player.set_pos(spawn_x, spawn_y)
             first_collision = False
             player_died = True
         else:
