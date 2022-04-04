@@ -178,10 +178,16 @@ class Background():
       def update(self, scroll, player_x, player_died):
         if player_died:
             scroll = [0, 0]
-        if self.bgX1 <= -self.rectBGimg[0]:
+        if self.bgX1 < -self.rectBGimg[0]:
             self.bgX1 = self.rectBGimg[0]
-        if self.bgX2 <= -self.rectBGimg[0]:
+        if self.bgX2 < -self.rectBGimg[0]:
             self.bgX2 = self.rectBGimg[0]
+           
+        elif self.bgX2 > self.rectBGimg[0]:
+            self.bgX2 = -self.rectBGimg[0] 
+        elif self.bgX1 > self.rectBGimg[0]:
+            self.bgX1 = -self.rectBGimg[0] 
+        
         self.bgX1 -= (scroll[0] - self.oldscroll[0]) * self.moving_speed
         self.bgX2 -= (scroll[0] - self.oldscroll[0]) * self.moving_speed
         self.oldscroll = scroll
@@ -238,7 +244,6 @@ moving_right = False
 moving_left = False
 
 player_y_momentum = 0
-air_timer = 0
 
 spawn_x = 170
 
@@ -250,6 +255,8 @@ last_frame = pygame.time.get_ticks()
 
 player = e.entity(spawn_x, 0, 11, 15, 'player', True)
 player_died = False
+player_jump = False
+player_jump2 = False
 enemies = {}
 for i in range(0):
     enemy_x = random.randint(3400, 6000)
@@ -289,7 +296,6 @@ while True: # game loop
     for bg in background_layers:
         if player_died:
             bg.re_init()
-            print(scroll)
             true_scroll = [0, 0]
         bg.update(scroll, player.x, player_died)
         bg.render()
@@ -381,13 +387,11 @@ while True: # game loop
     if collision_types['bottom']:
         first_collision = True
         player_y_momentum = 0
-        air_timer = 0
+        player_jump, player_jump2 = True, True
         if player_movement[0] != 0:
             if grass_sound_timer == 0:
                 grass_sound_timer = 30
                 random.choice(grass_sounds).play()
-    else:
-        air_timer += 1 + dtf(dt)
         
     player.change_frame(1)
     player_center = (player.get_center()[0] - scroll[0], player.get_center()[1] - scroll[1])
@@ -423,9 +427,15 @@ while True: # game loop
             if event.key == K_LEFT or event.key == K_a:
                 moving_left = True
             if event.key == K_UP or event.key == K_w or event.key == K_SPACE:
-                if air_timer < 6:
+                
+                if player_jump:
+                    player_jump = False
                     jump_sound.play()
-                    player_y_momentum = -5.5
+                    player_y_momentum = -4
+                elif player_jump2:
+                    player_jump2 = False
+                    jump_sound.play()
+                    player_y_momentum = -4
             if event.key == K_m:
                 if muted == False:
                     pygame.mixer.music.fadeout(1000)
