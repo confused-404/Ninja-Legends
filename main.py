@@ -165,21 +165,23 @@ shooting = False
 class Background():
       def __init__(self, image, speed):
             self.bgimage = image
-            self.rectBGimg = self.bgimage.get_rect()
+            self.rectBGimg = [296, 200]
  
             self.bgX1 = 0
  
-            self.bgX2 = 304
+            self.bgX2 = 296
             
             self.oldscroll = [0, 0]
  
             self.moving_speed = speed
          
-      def update(self, scroll, player_x, player_deaths):
-        if self.bgX1 <= -self.rectBGimg.width:
-            self.bgX1 = self.rectBGimg.width
-        if self.bgX2 <= -self.rectBGimg.width:
-            self.bgX2 = self.rectBGimg.width
+      def update(self, scroll, player_x, player_died):
+        if player_died:
+            scroll = [0, 0]
+        if self.bgX1 <= -self.rectBGimg[0]:
+            self.bgX1 = self.rectBGimg[0]
+        if self.bgX2 <= -self.rectBGimg[0]:
+            self.bgX2 = self.rectBGimg[0]
         self.bgX1 -= (scroll[0] - self.oldscroll[0]) * self.moving_speed
         self.bgX2 -= (scroll[0] - self.oldscroll[0]) * self.moving_speed
         self.oldscroll = scroll
@@ -188,6 +190,15 @@ class Background():
       def render(self):
          display.blit(self.bgimage, (self.bgX1, 0))
          display.blit(self.bgimage, (self.bgX2, 0))
+         
+      def re_init(self):
+ 
+            self.bgX1 = 0
+ 
+            self.bgX2 = 296
+            
+            self.oldscroll = [0, 0]
+ 
 
 class Bullet:
     def __init__(self, x, y, rel_x, rel_y, angle, bullet_image, shuriken_center):
@@ -238,7 +249,7 @@ dt = 0 # delta time
 last_frame = pygame.time.get_ticks()
 
 player = e.entity(spawn_x, 0, 11, 15, 'player', True)
-player_deaths = []
+player_died = False
 enemies = {}
 for i in range(0):
     enemy_x = random.randint(3400, 6000)
@@ -276,7 +287,11 @@ while True: # game loop
     level_map = game_maps[level]
     
     for bg in background_layers:
-        bg.update(scroll, player.x, player_deaths)
+        if player_died:
+            bg.re_init()
+            print(scroll)
+            true_scroll = [0, 0]
+        bg.update(scroll, player.x, player_died)
         bg.render()
         
     
@@ -343,7 +358,9 @@ while True: # game loop
         if player.y >= 500:
             player.set_pos(spawn_x, 0)
             first_collision = False
-            player_deaths.append(True)
+            player_died = True
+        else:
+            player_died = False
         
     if player_movement[0] > 0:
         if player_movement[1] == 0: 
