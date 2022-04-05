@@ -163,7 +163,7 @@ class Background():
             self.bgimage = image
             self.rectBGimg = [296, 200]
  
-            self.bgX1 = 0
+            self.bgX1 = -4
  
             self.bgX2 = 296
             
@@ -195,7 +195,7 @@ class Background():
          
       def re_init(self):
  
-            self.bgX1 = 0
+            self.bgX1 = -4
  
             self.bgX2 = 296
             
@@ -242,10 +242,10 @@ moving_left = False
 player_y_momentum = 0
 
 spawn_x = 170
-spawn_y = 200
+spawn_y = 250
 
-scroll = [spawn_x, spawn_y]
-true_scroll = [spawn_x, spawn_y]
+scroll = [0, 0]
+true_scroll = [0, 0]
 
 dt = 0 # delta time
 last_frame = pygame.time.get_ticks()
