@@ -116,13 +116,14 @@ tile_index = {1:top_grass,
               -1:None
               }
 
-game_maps = [[], [], []]
+game_maps = [[], []]
 level = 0
-with open('Data/Maps/level0_csv.csv', 'r') as f:
-    csv_reader = csv.reader(f)
-    for x in csv_reader:
-        x = [int(n) for n in x]
-        game_maps[0].append(x)
+for lvl in range(len(game_maps)):
+    with open('Data/Maps/level' + str(lvl) + '_csv.csv', 'r') as f:
+        csv_reader = csv.reader(f)
+        for x in csv_reader:
+            x = [int(n) for n in x]
+            game_maps[lvl].append(x)
 
 def blitRotate(surf, cleanimage, pos, originPos, angle):
     image_rect = cleanimage.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
@@ -241,8 +242,9 @@ moving_left = False
 
 player_y_momentum = 0
 
-spawn_x = 170
+spawn_x = 100
 spawn_y = 250
+end_level_x =2900
 
 scroll = [0, 0]
 true_scroll = [0, 0]
@@ -359,8 +361,13 @@ while True: # game loop
     player_y_momentum += 0.2 * dtf(dt)
     if player_y_momentum > 3:
         player_y_momentum = 3
-        if player.x <= -100:
-            boundary_text = pixel_font.render(display, 'You have reached the boundary', (50, 150))
+        if player.x >= 2900:
+            player.set_pos(spawn_x, spawn_y)
+            first_collision = False
+            player_died = True
+            level += 1
+        else:
+            player_died = False
         if player.y >= 400:
             player.set_pos(spawn_x, spawn_y)
             first_collision = False
@@ -474,6 +481,7 @@ while True: # game loop
             bullet.draw(display)
 
     frt = show_fps()
+    level_text = pixel_font.render(display, 'Level ' + str(level + 1), (240, 10))
 
     ### Fade In/ Fade OUt:
     
