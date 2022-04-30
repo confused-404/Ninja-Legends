@@ -11,7 +11,7 @@ pygame.display.set_caption('Ninja Legends') # set the window name
 
 WINDOW_SIZE = (900,600) # set up window size
 
-screen = pygame.display.set_mode(WINDOW_SIZE,0,32) # initiate screen
+screen = pygame.display.set_mode(WINDOW_SIZE,RESIZABLE) # initiate screen
 
 display = pygame.Surface((300, 200))
 
@@ -419,6 +419,9 @@ while True: # game loop
         if event.type == QUIT: # check for window quit
             pygame.quit() # stop pygame
             sys.exit() # stop script
+        if event.type == VIDEORESIZE:
+            WINDOW_SIZE = (event.w, event.h)
+            screen = pygame.display.set_mode(WINDOW_SIZE,RESIZABLE)
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 1:
                 if shooting == False:
