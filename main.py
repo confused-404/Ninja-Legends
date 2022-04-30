@@ -74,6 +74,8 @@ crosshair = pygame.image.load('Data/Images/Graphics/crosshair.png').convert()
 crosshair_rect = pygame.Rect(0, 0, crosshair.get_width(), crosshair.get_height())
 crosshair.set_colorkey((0, 0, 0))
 shuriken_image = pygame.image.load('Data/Images/Weapons/shuriken.png').convert_alpha()
+trophy_image = pygame.image.load('Data/Images/Graphics/trophy.png').convert_alpha()
+trophy_image.set_colorkey((0, 0, 0))
 
 pygame.mixer.pre_init(44100, -16, 2, 5)
 
@@ -116,14 +118,13 @@ tile_index = {1:top_grass,
               -1:None
               }
 
-game_maps = [[], []]
-level = 0
-for lvl in range(len(game_maps)):
-    with open('Data/Maps/level' + str(lvl) + '_csv.csv', 'r') as f:
-        csv_reader = csv.reader(f)
-        for x in csv_reader:
-            x = [int(n) for n in x]
-            game_maps[lvl].append(x)
+game_map = []
+
+with open('Data/Maps/combinedLevels' + '.csv', 'r') as f:
+    csv_reader = csv.reader(f)
+    for x in csv_reader:
+        x = [int(n) for n in x]
+        game_map.append(x)
 
 def blitRotate(surf, cleanimage, pos, originPos, angle):
     image_rect = cleanimage.get_rect(topleft = (pos[0] - originPos[0], pos[1]-originPos[1]))
@@ -244,7 +245,6 @@ player_y_momentum = 0
 
 spawn_x = 100
 spawn_y = 250
-end_level_x =2900
 
 scroll = [0, 0]
 true_scroll = [0, 0]
@@ -276,6 +276,9 @@ middleground = pygame.image.load("Data/Images/Tiles/middleground.png")
 background = pygame.image.load("Data/Images/Tiles/background.png")
 background_layers = [Background(background, .5), Background(middleground, 1), Background(foreground, 2)]
 
+meters = int(player.x / 20)
+high_meters = 0
+
 while True: # game loop
     dt = pygame.time.get_ticks() - last_frame
     last_frame = pygame.time.get_ticks()
@@ -289,23 +292,23 @@ while True: # game loop
     scroll = true_scroll.copy()
     scroll[0] = int(scroll[0] + dtf(dt))
     scroll[1] = int(scroll[1] + dtf(dt))
-
-    level_map = game_maps[level]
+    
+    if player_died:
+        true_scroll = [0, 0]
+        scroll = true_scroll.copy()
+        scroll[0] = int(scroll[0] + dtf(dt))
+        scroll[1] = int(scroll[1] + dtf(dt))
     
     for bg in background_layers:
         if player_died:
             bg.re_init()
-            true_scroll = [0, 0]
-            scroll = true_scroll.copy()
-            scroll[0] = int(scroll[0] + dtf(dt))
-            scroll[1] = int(scroll[1] + dtf(dt))
         bg.update(scroll, player.x, player_died)
         bg.render()
         
     
     tile_rects = []
     y = 0
-    for layer in level_map:
+    for layer in game_map:
         x = 0
         for tile in layer:
             if tile != -1:
@@ -361,14 +364,7 @@ while True: # game loop
     player_y_momentum += 0.2 * dtf(dt)
     if player_y_momentum > 3:
         player_y_momentum = 3
-        if player.x >= 2900:
-            player.set_pos(spawn_x, spawn_y)
-            first_collision = False
-            player_died = True
-            level += 1
-        else:
-            player_died = False
-        if player.y >= 400:
+        if player.y >= 550:
             player.set_pos(spawn_x, spawn_y)
             first_collision = False
             player_died = True
@@ -429,6 +425,11 @@ while True: # game loop
                     bullets.append(Bullet(player_center[0], player_center[1], rel_x, rel_y, angle, clean_outline, (bullet_rect.centerx, bullet_rect.centery)))
                     shooting = True
         if event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                try:
+                    pygame.display.iconify()
+                except:
+                    pass
             if event.key == K_RIGHT or event.key == K_d:
                 moving_right = True
             if event.key == K_LEFT or event.key == K_a:
@@ -481,7 +482,12 @@ while True: # game loop
             bullet.draw(display)
 
     frt = show_fps()
-    level_text = pixel_font.render(display, 'Level ' + str(level + 1), (240, 10))
+    meters = int((player.x - 100) / 20)
+    distance_text = pixel_font.render(display,str(meters) + 'm', (240, 10))
+    if meters >= high_meters:
+        high_meters = meters
+    high_score_text = pixel_font.render(display,str(high_meters) + 'm', (240, 30))
+    display.blit(trophy_image, (220, 28))
 
     ### Fade In/ Fade OUt:
     
