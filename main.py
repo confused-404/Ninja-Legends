@@ -1,4 +1,4 @@
-import pygame, sys, Data.Scripts.spritesheet as spritesheet, time, random, Data.Scripts.font_loader as font_loader, noise, math, csv # import pygame and sys
+import pygame, sys, Data.Scripts.spritesheet as spritesheet, random, Data.Scripts.font_loader as font_loader, math, csv # import pygame and sys
 
 import Data.engine as e
 

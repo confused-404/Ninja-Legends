@@ -1,4 +1,4 @@
-import pygame, math, os, sys, time, random, noise, math
+import pygame, math, os, math
 from pygame.locals import *
 
 global e_colorkey
@@ -253,10 +253,8 @@ class entity(object):
  
 # animation stuff
 
-global animation_database
 animation_database = {}
  
-global animation_higher_database
 animation_higher_database = {}
  
 # a sequence looks like [[0,1],[1,1],[2,1],[3,1],[4,2]]
