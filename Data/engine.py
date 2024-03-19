@@ -1,3 +1,5 @@
+# formerly in one file, refactored using this code (slightly edited) by DaFluffyPotato on youtube
+
 import pygame, math, os, math
 from pygame.locals import *
 
